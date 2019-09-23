@@ -30,6 +30,7 @@ TextStyle headingStyle = TextStyle(fontSize: 18.0, fontWeight: FontWeight.w400);
 SharedPreferences _preferences;
 List<ScheduleData> allSchedule = [];
 List<CategoryData> allCategories = [];
+List<EventData> allEvents = [];
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -47,12 +48,14 @@ class _MyHomePageState extends State<MyHomePage> {
     _startupCache();
     loadCategories();
     loadSchedule();
+    loadEvents();
   }
 
   _startupCache() async {
     _preferences = await SharedPreferences.getInstance();
     _cacheSchedule();
     _cacheCategories();
+    _cacheEvents();
   }
 
   void _cacheSchedule() async {
@@ -73,6 +76,17 @@ class _MyHomePageState extends State<MyHomePage> {
     } catch (e) {
       print(e);
       print("CAT ERRP");
+    }
+  }
+
+  void _cacheEvents() async {
+    try {
+      final response =
+          await http.get(Uri.encodeFull("https://api.techtatva.in/events"));
+      _preferences.setString('Events', json.encode(response.body));
+    } catch (e) {
+      print(e);
+      print("error in fetching events");
     }
   }
 
@@ -107,7 +121,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     return SafeArea(
       child: Scaffold(
         body: PageView(
@@ -137,6 +150,71 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+}
+
+_fetchEvents() async {
+  List<EventData> events = [];
+
+  _preferences = await SharedPreferences.getInstance();
+
+  var jsonData;
+
+  try{
+    String data = _preferences.getString('Events') ?? null;
+
+    if (data != null){
+      jsonData = jsonDecode(jsonDecode(data));
+    }
+
+    else{
+      final response = 
+        await http.get(Uri.encodeFull("https://api.techtatva.in/events"));
+
+        if (response.statusCode == 200) jsonData = json.decode(response.body);
+    }
+
+    for (var json in jsonData['data']){
+      try{
+        var id = json['id'];
+        var categoryId = json['category'];
+        var name = json['name'];
+        var free = json['free'];
+        var description = json['shortDesc'];
+        var minTeamSize = json['minTeamSize'];
+        var maxTeamSize = json['maxTeamSize'];
+        var delCardType = json['delCardType'];
+      
+        EventData temp = EventData(
+          id: id,
+          categoryId: categoryId,
+          name: name,
+          free: free,
+          description: description,
+          minTeamSize: minTeamSize,
+          maxTeamSize: maxTeamSize,
+          delCardType: delCardType
+        );
+
+        events.add(temp);
+       // print(temp.description);
+      }
+      catch(e){
+        print(e);
+        print("Error in parsing and fetching events");
+      }
+    }
+  }
+  catch(e){
+    print(e);
+  }
+  return events;
+}
+
+Future<String> loadEvents() async {
+  allEvents = await _fetchEvents();
+  print(allEvents.length);
+  print("WE GOT IT");
+  return "success";
 }
 
 _fetchCategories() async { 
@@ -192,83 +270,123 @@ _fetchCategories() async {
   return category;
 }
 
- Future<String> loadCategories() async {
-    List<CategoryData> temp = await _fetchCategories();
-
-    try {
-      for (var item in temp) {
-        if (item.type == "TECHNICAL") {
-          allCategories.add(item);
-        }
+Future<String> loadCategories() async {
+  List<CategoryData> temp = await _fetchCategories();
+  allCategories.clear();
+  try {
+    for (var item in temp) {
+      if (item.type == "TECHNICAL") {
+        allCategories.add(item);
       }
-    } catch (e) {
-      print(e);
-      print("lol ho gaya");
-      return "success";
     }
-    print(allCategories.length);
+  } catch (e) {
+    print(e);
+    print("lol ho gaya");
     return "success";
   }
+  print(allCategories.length);
+  return "success";
+}
 
-    _fetchSchedule() async {
+_fetchSchedule() async {
+  List<ScheduleData> schedule = [];
 
-    List<ScheduleData> schedule = [];
+  _preferences = await SharedPreferences.getInstance();
 
-    _preferences = await SharedPreferences.getInstance();
+  String data = _preferences.getString('Schedule') ?? null;
 
-    String data = _preferences.getString('Schedule') ?? null;
+  var jsonData;
 
-    var jsonData;
+  try {
+    if (data == null) {
+      final response =
+          await http.get(Uri.encodeFull("https://api.techtatva.in/schedule"));
 
-    try {
-      if (data == null) {
-        final response =
-            await http.get(Uri.encodeFull("https://api.techtatva.in/schedule"));
-
-        if (response.statusCode == 200) {
-          jsonData = json.decode(response.body);
-        }
-      } else {
-        jsonData = jsonDecode(jsonDecode(data));
+      if (response.statusCode == 200) {
+        jsonData = json.decode(response.body);
       }
-
-      for (var json in jsonData['data']) {
-        try {
-          var id = json['id'];
-          var eventId = json['event'];
-          var round = json['round'] ?? 3;
-          var name = json['eventName'];
-          var categoryId = json['categoryId'];
-          var location = json['location'];
-          var startTime = DateTime.parse(json['start']);
-          var endTime = DateTime.parse(json['end']);
-
-          ScheduleData temp = ScheduleData(
-              id: id,
-              eventId: eventId,
-              round: round,
-              name: name,
-              categoryId: categoryId,
-              startTime: startTime,
-              endTime: endTime,
-              location: location,
-              ); 
-
-          schedule.add(temp);
-        } catch (e) {
-          print("CANT DO IT");
-          print(e);
-        }
-      }
-    } catch (e) {
-      print(e);
+    } else {
+      jsonData = jsonDecode(jsonDecode(data));
     }
-    return schedule;
+
+    for (var json in jsonData['data']) {
+      try {
+        var id = json['id'];
+        var eventId = json['eventId'];
+        var round = json['round'] ?? 3;
+        var name = json['eventName'];
+        var categoryId = json['categoryId'];
+        var location = json['location'];
+        var startTime = DateTime.parse(json['start']);
+        var endTime = DateTime.parse(json['end']);
+
+        ScheduleData temp = ScheduleData(
+          id: id,
+          eventId: eventId,
+          round: round,
+          name: name,
+          categoryId: categoryId,
+          startTime: startTime,
+          endTime: endTime,
+          location: location,
+        );
+
+        schedule.add(temp);
+      } catch (e) {
+        print("CANT DO IT");
+        print(e);
+      }
+    }
+  } catch (e) {
+    print(e);
+  }
+  return schedule;
+}
+
+Future<String> loadSchedule() async {
+  allSchedule = await _fetchSchedule();
+  return "success";
+}
+
+List<ScheduleData> scheduleForDay(
+      List<ScheduleData> allSchedule, String day) {
+    List<ScheduleData> temp = [];
+
+    switch (day) {
+      case 'Wednesday':
+        for (var i in allSchedule) {
+          if (i.startTime.day == 9) temp.add(i);
+        }
+        break;
+
+      case 'Thursday':
+        for (var i in allSchedule) {
+          if (i.startTime.day == 10) temp.add(i);
+        }
+        break;
+
+      case 'Friday':
+        for (var i in allSchedule) {
+          if (i.startTime.day == 11) temp.add(i);
+        }
+        break;
+
+      case 'Saturday':
+        for (var i in allSchedule) {
+          if (i.startTime.day == 12) temp.add(i);
+        }
+        break;
+
+      default:
+        print("ERROR IN DAY WISE PARSINGG");
+        break;
+    }
+
+    return temp;
   }
 
-  Future<String> loadSchedule() async {
-    allSchedule = await _fetchSchedule();
-    return "success";
+  String getTime(ScheduleData schedule) {
+    return '${schedule.startTime.hour.toString()}:${schedule.startTime.minute.toString() == '0' ? '00' : schedule.startTime.minute.toString()} - ${schedule.endTime.hour.toString()}:${schedule.endTime.minute.toString() == '0' ? '00' : schedule.endTime.minute.toString()}';
   }
 
 class SliverAppBarDelegate extends SliverPersistentHeaderDelegate {

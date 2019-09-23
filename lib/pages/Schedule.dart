@@ -93,105 +93,6 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
     );
   }
 
-  List<ScheduleData> scheduleForDay(
-      List<ScheduleData> allSchedule, String day) {
-    List<ScheduleData> temp = [];
-
-    switch (day) {
-      case 'Wednesday':
-        for (var i in allSchedule) {
-          if (i.startTime.day == 9) temp.add(i);
-        }
-        break;
-
-      case 'Thursday':
-        for (var i in allSchedule) {
-          if (i.startTime.day == 10) temp.add(i);
-        }
-        break;
-
-      case 'Friday':
-        for (var i in allSchedule) {
-          if (i.startTime.day == 11) temp.add(i);
-        }
-        break;
-
-      case 'Saturday':
-        for (var i in allSchedule) {
-          if (i.startTime.day == 12) temp.add(i);
-        }
-        break;
-
-      default:
-        print("ERROR IN DAY WISE PARSINGG");
-        break;
-    }
-
-    return temp;
-  }
-
-  // _fetchSchedule() async {
-  //   // add SharedPreferences here
-
-  //   List<ScheduleData> schedule = [];
-
-  //   _preferences = await SharedPreferences.getInstance();
-
-  //   String data = _preferences.getString('Schedule') ?? null;
-
-  //   var jsonData;
-
-  //   try {
-  //     if (data == null) {
-  //       print("EFEFEF");
-  //       final response =
-  //           await http.get(Uri.encodeFull("https://api.techtatva.in/schedule"));
-
-  //       if (response.statusCode == 200) {
-  //         jsonData = json.decode(response.body);
-  //       }
-  //     } else {
-  //       jsonData = jsonDecode(jsonDecode(data));
-  //     }
-
-  //     for (var json in jsonData['data']) {
-  //       try {
-  //         var id = json['id'];
-  //         var eventId = json['event'];
-  //         var round = json['round'] ?? 3;
-  //         var name = json['eventName'];
-  //         var location = json['location'];
-  //         var startTime = DateTime.parse(json['start']);
-  //         var endTime = DateTime.parse(json['end']);
-
-  //         ScheduleData temp = ScheduleData(
-  //             id: id,
-  //             eventId: eventId,
-  //             round: round,
-  //             name: name,
-  //             startTime: startTime,
-  //             endTime: endTime,
-  //             location: location,
-  //             );
-
-  //         schedule.add(temp);
-  //         print(temp.round);
-  //       } catch (e) {
-  //         print("CANT DO IT");
-  //         print(e);
-  //       }
-  //     }
-  //   } catch (e) {
-  //     print(e);
-  //   }
-  //   return schedule;
-  // }
-
-  // Future<String> loadSchedule() async {
-  //   allSchedule = await _fetchSchedule();
-  //   return "success";
-  // }
-
   Widget _buildTab(String day, String date) => Tab(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -312,7 +213,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                             _buildEventListTileInfo(Icon(Icons.location_on),
                                 "Venue:", schedule.location),
                             _buildEventListTileInfo(
-                                Icon(Icons.people), "Team Size:", "2"),
+                                Icon(Icons.people), "Team Size:", getTeamSize(schedule)),
                             Container(
                               margin: EdgeInsets.fromLTRB(50.0,20.0,50.0,20.0),
                               height: 0.5,
@@ -336,7 +237,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                           child: ListTile(
                             leading: Icon(Icons.subject),
                             title: Text(
-                              "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+                              getEventDescription(schedule),
                               style: TextStyle(color: Colors.white54),
                             ),
                           ),
@@ -349,9 +250,25 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
         });
   }
 
+  getEventDescription(ScheduleData scheduleData){
+    for (var i in allEvents){
+      if (i.id == scheduleData.eventId){
+        return i.description;
+      }
+    }
+  }
+
+  getTeamSize(ScheduleData scheduleData){
+    for (var i in allEvents){
+      if (i.id == scheduleData.eventId){
+        print("MATCHED");
+        return (i.maxTeamSize == i.minTeamSize) ? i.maxTeamSize.toString() : '${i.minTeamSize} - ${i.maxTeamSize}'; 
+      }
+    }
+  }
+
   Widget _buildEventListTileInfo(Icon icon, String title, String value) {
     return Material(
-      //color: Colors.white10,
       color: Colors.black,
       child: ListTile(
         onTap: () {},
@@ -395,6 +312,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                   child: InkWell(
                     onTap: () {
                       _showBottomModalSheet(context, allSchedule[index]);
+                      print(allSchedule[index].eventId);
                     },
                     child: ListTile(
                       title: Container(
@@ -542,8 +460,4 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
           ),
         ),
       );
-
-  String getTime(ScheduleData schedule) {
-    return '${schedule.startTime.hour.toString()}:${schedule.startTime.minute.toString() == '0' ? '00' : schedule.startTime.minute.toString()} - ${schedule.endTime.hour.toString()}:${schedule.endTime.minute.toString() == '0' ? '00' : schedule.endTime.minute.toString()}';
-  }
 }
