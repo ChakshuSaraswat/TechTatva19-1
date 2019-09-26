@@ -66,8 +66,6 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
                         child: ClipRect(
                           clipBehavior: Clip.antiAliasWithSaveLayer,
                           child: TextField(
-                            // initialValue: "search here ...",
-
                             decoration: InputDecoration(
                                 border: InputBorder.none,
                                 hintText: "search here...",
@@ -102,28 +100,15 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
                   "Categories", "assets/Categories.png")
             ];
           },
-          body: FutureBuilder(
-            future: loadCategories(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData)
-                return Container(
-                    height: 300.0,
-                    width: 300.0,
-                    alignment: Alignment.center,
-                    child: CircularProgressIndicator());
-              else {
-                return Container(
-                  padding: EdgeInsets.only(top: 10.0),
-                  child: ListView.builder(
-                    itemCount: allCategories.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      if (allCategories[index].type == "TECHNICAL")
-                        return _buildCategoryCard(context, index);
-                    },
-                  ),
-                );
-              }
-            },
+          body: Container(
+            padding: EdgeInsets.only(top: 10.0),
+            child: ListView.builder(
+              itemCount: allCategories.length,
+              itemBuilder: (BuildContext context, int index) {
+                if (allCategories[index].type == "TECHNICAL")
+                  return _buildCategoryCard(context, index);
+              },
+            ),
           ),
         ));
   }
@@ -249,10 +234,8 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
         ? Column(
             children: <Widget>[
               Container(
-                //  color: Colors.red,
                 height: 270.0,
                 width: 270.0,
-                //  color: Colors.red,
                 alignment: Alignment.topCenter,
                 child: FlareActor(
                   'assets/NoEvent.flr',
@@ -282,7 +265,8 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
                       color: Colors.white10,
                       child: InkWell(
                         onTap: () {
-                          //  _showBottomModalSheet(context,allSchedule[index]);
+                          _showCategoryScheduleBottomModalSheet(
+                              context, allSchedule[index]);
                         },
                         child: ListTile(
                           title: Container(
@@ -391,7 +375,7 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
                                         MainAxisAlignment.spaceBetween,
                                     children: <Widget>[
                                       Container(
-                                        width: 40.0,
+                                        width: 80.0,
                                         child: Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceEvenly,
@@ -401,7 +385,7 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
                                               size: 15.0,
                                             ),
                                             Text(
-                                              "R2",
+                                              "Round ${allSchedule[index].round}",
                                               style: TextStyle(
                                                   fontSize: 16.0,
                                                   fontWeight: FontWeight.w300),
@@ -440,7 +424,7 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
           children: <Widget>[
             Icon(
               Icons.person,
-              size: 20.0,
+              size: 22.0,
               color: Colors.white,
             ),
             Container(
@@ -448,7 +432,7 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
             ),
             Text(
               name,
-              style: TextStyle(fontSize: 14.0, color: Colors.white),
+              style: TextStyle(fontSize: 16.0, color: Colors.white),
             )
           ],
         ),
@@ -456,7 +440,7 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
           children: <Widget>[
             Text(
               contact,
-              style: TextStyle(fontSize: 14.0, color: Colors.white54),
+              style: TextStyle(fontSize: 16.0, color: Colors.white54),
             )
           ],
         ),
@@ -522,5 +506,164 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
         )
       ],
     );
+  }
+
+  _showCategoryScheduleBottomModalSheet(
+      BuildContext context, ScheduleData schedule) {
+    TabController _controller = TabController(length: 2, vsync: this);
+
+    print(allCategories.length);
+
+    CategoryData scheduleCategory;
+
+    for (var i in allCategories) {
+      if (schedule.categoryId == i.id)
+        scheduleCategory = CategoryData(
+          id: i.id,
+          eventIds: i.eventIds,
+          name: i.name,
+          description: i.description,
+          type: i.type,
+          cc1Name: i.cc1Name,
+          cc2Name: i.cc2Name,
+          cc1Contact: i.cc1Contact,
+          cc2Contact: i.cc2Contact,
+        );
+    }
+
+    print(scheduleCategory.name);
+
+    showModalBottomSheet(
+        backgroundColor: Colors.black,
+        isScrollControlled: true,
+        context: context,
+        builder: (BuildContext context) {
+          return Container(
+              height: 600.0,
+              child: Column(
+                children: <Widget>[
+                  Container(
+                    padding: EdgeInsets.all(20.0),
+                    alignment: Alignment.center,
+                    child: Text(
+                      schedule.name,
+                      style: TextStyle(fontSize: 26.0),
+                    ),
+                  ),
+                  FlatButton(
+                    onPressed: () {},
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(5.0),
+                      child: Container(
+                        color: Colors.greenAccent.shade400.withOpacity(0.7),
+                        height: MediaQuery.of(context).size.height * 0.055,
+                        width: MediaQuery.of(context).size.width,
+                        alignment: Alignment.center,
+                        child: Text(
+                          "Register Now",
+                          style: TextStyle(
+                            fontSize: 17.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  TabBar(
+                    controller: _controller,
+                    tabs: <Widget>[
+                      Tab(
+                        text: "Event",
+                      ),
+                      Tab(
+                        text: "Description",
+                      )
+                    ],
+                  ),
+                  Container(
+                    height: MediaQuery.of(context).size.height * 0.52,
+                    child: TabBarView(
+                      controller: _controller,
+                      children: <Widget>[
+                        ListView(
+                          children: <Widget>[
+                            _buildEventListTileInfo(Icon(Icons.assessment),
+                                "Round:", schedule.round.toString()),
+                            _buildEventListTileInfo(Icon(Icons.category),
+                                "Category:", scheduleCategory.name),
+                            _buildEventListTileInfo(
+                                Icon(Icons.calendar_today),
+                                "Date:",
+                                '${schedule.startTime.day.toString()}-${schedule.startTime.month.toString()}-${schedule.startTime.year.toString()}'),
+                            _buildEventListTileInfo(
+                                Icon(Icons.timer), "Time:", getTime(schedule)),
+                            _buildEventListTileInfo(Icon(Icons.location_on),
+                                "Venue:", schedule.location),
+                            _buildEventListTileInfo(Icon(Icons.people),
+                                "Team Size:", getTeamSize(schedule)),
+                          ],
+                        ),
+                        Container(
+                          padding: EdgeInsets.all(5.0),
+                          child: ListTile(
+                            leading: Icon(Icons.subject),
+                            title: Text(
+                              getEventDescription(schedule),
+                              style: TextStyle(color: Colors.white54),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
+              ));
+        });
+  }
+
+  Widget _buildEventListTileInfo(Icon icon, String title, String value) {
+    return Material(
+      color: Colors.black,
+      child: ListTile(
+        onTap: () {},
+        leading: icon,
+        title: Container(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w100,
+                ),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                    fontWeight: FontWeight.w400, color: Colors.white54),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  getEventDescription(ScheduleData scheduleData) {
+    for (var i in allEvents) {
+      if (i.id == scheduleData.eventId) {
+        return i.description;
+      }
+    }
+  }
+
+  getTeamSize(ScheduleData scheduleData) {
+    for (var i in allEvents) {
+      if (i.id == scheduleData.eventId) {
+        print("MATCHED");
+        return (i.maxTeamSize == i.minTeamSize)
+            ? i.maxTeamSize.toString()
+            : '${i.minTeamSize} - ${i.maxTeamSize}';
+      }
+    }
   }
 }

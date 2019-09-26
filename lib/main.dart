@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techtatva19/pages/Home.dart';
@@ -31,6 +33,7 @@ SharedPreferences _preferences;
 List<ScheduleData> allSchedule = [];
 List<CategoryData> allCategories = [];
 List<EventData> allEvents = [];
+List<ResultData> allResults = [];
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -49,6 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
     loadCategories();
     loadSchedule();
     loadEvents();
+    loadResults();
   }
 
   _startupCache() async {
@@ -56,6 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _cacheSchedule();
     _cacheCategories();
     _cacheEvents();
+    _cacheResults();
   }
 
   void _cacheSchedule() async {
@@ -87,6 +92,17 @@ class _MyHomePageState extends State<MyHomePage> {
     } catch (e) {
       print(e);
       print("error in fetching events");
+    }
+  }
+
+  void _cacheResults() async {
+    try {
+      final response =
+          await http.get(Uri.encodeFull("https://api.mitrevels.in/results"));
+      _preferences.setString('Results', json.encode(response.body));
+    } catch (e) {
+      print(e);
+      print("Error in fetching results");
     }
   }
 
@@ -132,6 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Home(),
             Schedule(),
             //Container(),
+            //Container(),
             Categories(),
             Results(),
           ],
@@ -159,22 +176,33 @@ _fetchEvents() async {
 
   var jsonData;
 
-  try{
+  var isCon;
+
+  try {
+    final result = await InternetAddress.lookup('google.com');
+    if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+      print('connected');
+      isCon = true;
+    }
+  } on SocketException catch (_) {
+    print('not connected');
+    isCon = false;
+  }
+
+  try {
     String data = _preferences.getString('Events') ?? null;
 
-    if (data != null){
+    if (data != null && !isCon) {
       jsonData = jsonDecode(jsonDecode(data));
+    } else {
+      final response =
+          await http.get(Uri.encodeFull("https://api.techtatva.in/events"));
+
+      if (response.statusCode == 200) jsonData = json.decode(response.body);
     }
 
-    else{
-      final response = 
-        await http.get(Uri.encodeFull("https://api.techtatva.in/events"));
-
-        if (response.statusCode == 200) jsonData = json.decode(response.body);
-    }
-
-    for (var json in jsonData['data']){
-      try{
+    for (var json in jsonData['data']) {
+      try {
         var id = json['id'];
         var categoryId = json['category'];
         var name = json['name'];
@@ -183,28 +211,25 @@ _fetchEvents() async {
         var minTeamSize = json['minTeamSize'];
         var maxTeamSize = json['maxTeamSize'];
         var delCardType = json['delCardType'];
-      
+
         EventData temp = EventData(
-          id: id,
-          categoryId: categoryId,
-          name: name,
-          free: free,
-          description: description,
-          minTeamSize: minTeamSize,
-          maxTeamSize: maxTeamSize,
-          delCardType: delCardType
-        );
+            id: id,
+            categoryId: categoryId,
+            name: name,
+            free: free,
+            description: description,
+            minTeamSize: minTeamSize,
+            maxTeamSize: maxTeamSize,
+            delCardType: delCardType);
 
         events.add(temp);
-       // print(temp.description);
-      }
-      catch(e){
+        // print(temp.description);
+      } catch (e) {
         print(e);
         print("Error in parsing and fetching events");
       }
     }
-  }
-  catch(e){
+  } catch (e) {
     print(e);
   }
   return events;
@@ -217,17 +242,95 @@ Future<String> loadEvents() async {
   return "success";
 }
 
-_fetchCategories() async { 
+Future<String> loadResults() async {
+  allResults = await _fetchResults();
+  print(allResults.length);
+  print("GOT THEM RESULTS BOI");
+  return "success";
+}
+
+_fetchResults() async {
+  List<ResultData> results = [];
+
+  _preferences = await SharedPreferences.getInstance();
+
+  var jsonData;
+
+  var isCon;
+
+  try {
+    final result = await InternetAddress.lookup('google.com');
+    if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+      print('connected');
+      isCon = true;
+    }
+  } on SocketException catch (_) {
+    print('not connected');
+    isCon = false;
+  }
+
+  try {
+    String data = _preferences.getString('Results') ?? null;
+
+    if (data != null && !isCon) {
+      jsonData = jsonDecode(jsonDecode(data));
+    } else {
+      final response =
+          await http.get(Uri.encodeFull("https://api.mitrevels.in/results"));
+
+      if (response.statusCode == 200) jsonData = json.decode(response.body);
+    }
+
+    for (var json in jsonData['data']) {
+      try {
+        var eventId = json['event'];
+        var teamId = json['teamid'];
+        var position = json['position'];
+        var round = json['round'];
+
+        ResultData temp = ResultData(
+          eventId: eventId,
+          teamId: teamId,
+          position: position,
+          round: round,
+        );
+
+        results.add(temp);
+      } catch (e) {
+        print(e);
+        print("error in parsing results");
+      }
+    }
+  } catch (e) {
+    print(e);
+  }
+  return results;
+}
+
+_fetchCategories() async {
   List<CategoryData> category = [];
 
   _preferences = await SharedPreferences.getInstance();
 
   var jsonData;
 
+  var isCon;
+
+  try {
+    final result = await InternetAddress.lookup('google.com');
+    if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+      print('connected');
+      isCon = true;
+    }
+  } on SocketException catch (_) {
+    print('not connected');
+    isCon = false;
+  }
+
   try {
     String data = _preferences.getString('Categories') ?? null;
 
-    if (data != null) {
+    if (data != null && !isCon) {
       jsonData = jsonDecode(jsonDecode(data));
     } else {
       final response =
@@ -297,8 +400,21 @@ _fetchSchedule() async {
 
   var jsonData;
 
+  var isCon;
+
   try {
-    if (data == null) {
+    final result = await InternetAddress.lookup('google.com');
+    if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+      print('connected');
+      isCon = true;
+    }
+  } on SocketException catch (_) {
+    print('not connected');
+    isCon = false;
+  }
+
+  try {
+    if (data == null && !isCon) {
       final response =
           await http.get(Uri.encodeFull("https://api.techtatva.in/schedule"));
 
@@ -306,6 +422,7 @@ _fetchSchedule() async {
         jsonData = json.decode(response.body);
       }
     } else {
+      print("CACHEDDDDD");
       jsonData = jsonDecode(jsonDecode(data));
     }
 
@@ -348,46 +465,45 @@ Future<String> loadSchedule() async {
   return "success";
 }
 
-List<ScheduleData> scheduleForDay(
-      List<ScheduleData> allSchedule, String day) {
-    List<ScheduleData> temp = [];
+List<ScheduleData> scheduleForDay(List<ScheduleData> allSchedule, String day) {
+  List<ScheduleData> temp = [];
 
-    switch (day) {
-      case 'Wednesday':
-        for (var i in allSchedule) {
-          if (i.startTime.day == 9) temp.add(i);
-        }
-        break;
+  switch (day) {
+    case 'Wednesday':
+      for (var i in allSchedule) {
+        if (i.startTime.day == 9) temp.add(i);
+      }
+      break;
 
-      case 'Thursday':
-        for (var i in allSchedule) {
-          if (i.startTime.day == 10) temp.add(i);
-        }
-        break;
+    case 'Thursday':
+      for (var i in allSchedule) {
+        if (i.startTime.day == 10) temp.add(i);
+      }
+      break;
 
-      case 'Friday':
-        for (var i in allSchedule) {
-          if (i.startTime.day == 11) temp.add(i);
-        }
-        break;
+    case 'Friday':
+      for (var i in allSchedule) {
+        if (i.startTime.day == 11) temp.add(i);
+      }
+      break;
 
-      case 'Saturday':
-        for (var i in allSchedule) {
-          if (i.startTime.day == 12) temp.add(i);
-        }
-        break;
+    case 'Saturday':
+      for (var i in allSchedule) {
+        if (i.startTime.day == 12) temp.add(i);
+      }
+      break;
 
-      default:
-        print("ERROR IN DAY WISE PARSINGG");
-        break;
-    }
-
-    return temp;
+    default:
+      print("ERROR IN DAY WISE PARSINGG");
+      break;
   }
 
-  String getTime(ScheduleData schedule) {
-    return '${schedule.startTime.hour.toString()}:${schedule.startTime.minute.toString() == '0' ? '00' : schedule.startTime.minute.toString()} - ${schedule.endTime.hour.toString()}:${schedule.endTime.minute.toString() == '0' ? '00' : schedule.endTime.minute.toString()}';
-  }
+  return temp;
+}
+
+String getTime(ScheduleData schedule) {
+  return '${schedule.startTime.hour.toString()}:${schedule.startTime.minute.toString() == '0' ? '00' : schedule.startTime.minute.toString()} - ${schedule.endTime.hour.toString()}:${schedule.endTime.minute.toString() == '0' ? '00' : schedule.endTime.minute.toString()}';
+}
 
 class SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   SliverAppBarDelegate(this._tabBar);
@@ -422,7 +538,7 @@ class SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
           centerTitle: true,
           title: Text(name, style: headingStyle),
           background: Image.asset(image,
-              color: Colors.black.withOpacity(0.75),
+              color: Colors.black.withOpacity(0.55),
               colorBlendMode: BlendMode.darken,
               fit: BoxFit.cover)),
       actions: <Widget>[

@@ -61,34 +61,18 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                 ),
               ];
             },
-            body: FutureBuilder(
-              future: loadSchedule(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData)
-                  return Container(
-                      height: 300.0,
-                      width: 300.0,
-                      alignment: Alignment.center,
-                      child: CircularProgressIndicator());
-                else {
-                  return TabBarView(
-                    children: <Widget>[
-                      Padding(
-                          padding: EdgeInsets.all(5.0),
-                          child: _buildCard(
-                              scheduleForDay(allSchedule, 'Wednesday'),
-                              context)),
-                      _buildCard(
-                          scheduleForDay(allSchedule, 'Thursday'), context),
-                      _buildCard(
-                          scheduleForDay(allSchedule, 'Friday'), context),
-                      _buildCard(
-                          scheduleForDay(allSchedule, 'Saturday'), context),
-                    ],
-                  );
-                }
-              },
-            )),
+            body: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TabBarView(
+                children: <Widget>[
+                  _buildCard(scheduleForDay(allSchedule, 'Wednesday'), context),
+                  _buildCard(scheduleForDay(allSchedule, 'Thursday'), context),
+                  _buildCard(scheduleForDay(allSchedule, 'Friday'), context),
+                  _buildCard(scheduleForDay(allSchedule, 'Saturday'), context),
+                ],
+              ),
+            )
+            ),
       ),
     );
   }
@@ -212,10 +196,11 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                                 Icon(Icons.timer), "Time:", getTime(schedule)),
                             _buildEventListTileInfo(Icon(Icons.location_on),
                                 "Venue:", schedule.location),
-                            _buildEventListTileInfo(
-                                Icon(Icons.people), "Team Size:", getTeamSize(schedule)),
+                            _buildEventListTileInfo(Icon(Icons.people),
+                                "Team Size:", getTeamSize(schedule)),
                             Container(
-                              margin: EdgeInsets.fromLTRB(50.0,20.0,50.0,20.0),
+                              margin:
+                                  EdgeInsets.fromLTRB(50.0, 20.0, 50.0, 20.0),
                               height: 0.5,
                               width: 100.0,
                               color: Colors.greenAccent,
@@ -250,19 +235,21 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
         });
   }
 
-  getEventDescription(ScheduleData scheduleData){
-    for (var i in allEvents){
-      if (i.id == scheduleData.eventId){
+  getEventDescription(ScheduleData scheduleData) {
+    for (var i in allEvents) {
+      if (i.id == scheduleData.eventId) {
         return i.description;
       }
     }
   }
 
-  getTeamSize(ScheduleData scheduleData){
-    for (var i in allEvents){
-      if (i.id == scheduleData.eventId){
+  getTeamSize(ScheduleData scheduleData) {
+    for (var i in allEvents) {
+      if (i.id == scheduleData.eventId) {
         print("MATCHED");
-        return (i.maxTeamSize == i.minTeamSize) ? i.maxTeamSize.toString() : '${i.minTeamSize} - ${i.maxTeamSize}'; 
+        return (i.maxTeamSize == i.minTeamSize)
+            ? i.maxTeamSize.toString()
+            : '${i.minTeamSize} - ${i.maxTeamSize}';
       }
     }
   }
@@ -421,7 +408,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                                     MainAxisAlignment.spaceBetween,
                                 children: <Widget>[
                                   Container(
-                                    width: 40.0,
+                                    width: 80.0,
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceEvenly,
@@ -431,7 +418,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                                           size: 15.0,
                                         ),
                                         Text(
-                                          "R${allSchedule[index].round}",
+                                          "Round ${allSchedule[index].round}",
                                           style: TextStyle(
                                               fontSize: 16.0,
                                               fontWeight: FontWeight.w300),
