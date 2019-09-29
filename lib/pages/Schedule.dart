@@ -61,7 +61,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                 ),
               ];
             },
-            body: Padding(
+            body: Container(
               padding: const EdgeInsets.all(8.0),
               child: TabBarView(
                 children: <Widget>[
@@ -78,31 +78,33 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
   }
 
   Widget _buildTab(String day, String date) => Tab(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Text(
-              day,
-              style: TextStyle(fontSize: 18.0),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Icon(
-                  Icons.calendar_today,
-                  size: 9.0,
-                  color: Colors.white54,
-                ),
-                Text(
-                  date,
-                  style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 9.0,
-                      fontWeight: FontWeight.w100),
-                ),
-              ],
-            ),
-          ],
+        child: Container(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Text(
+                day,
+                style: TextStyle(fontSize: 18.0),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  Icon(
+                    Icons.calendar_today,
+                    size: 9.0,
+                    color: Colors.white54,
+                  ),
+                  Text(
+                    date,
+                    style: TextStyle(
+                        color: Colors.white54,
+                        fontSize: 9.0,
+                        fontWeight: FontWeight.w100),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       );
 
@@ -136,7 +138,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
         context: context,
         builder: (BuildContext context) {
           return Container(
-              height: MediaQuery.of(context).size.height * 0.75,
+              height: fromHome ? MediaQuery.of(context).size.height * 0.73 : MediaQuery.of(context).size.height * 0.75,
               child: Column(
                 children: <Widget>[
                   Container(
@@ -177,7 +179,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                     ],
                   ),
                   Container(
-                    height: MediaQuery.of(context).size.height * 0.52,
+                    height: fromHome ? MediaQuery.of(context).size.height * 0.48 : MediaQuery.of(context).size.height * 0.5,
                     //color: Colors.black,
                     child: TabBarView(
                       controller: _controller,
@@ -287,8 +289,8 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
         alignment: Alignment.bottomCenter,
         child: Container(
           color: Colors.black,
-          padding: EdgeInsets.all(2.0),
-          height: MediaQuery.of(context).size.height * 0.74,
+          padding: EdgeInsets.fromLTRB(2.0,fromHome ? 0.0 : 15,2,2),
+          height: fromHome ? MediaQuery.of(context).size.height * 0.8 : MediaQuery.of(context).size.height * 0.74,
           child: ListView.builder(
             itemCount: allSchedule.length,
             itemBuilder: (BuildContext context, int index) {

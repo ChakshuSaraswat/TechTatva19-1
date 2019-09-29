@@ -121,7 +121,7 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
         context: context,
         builder: (BuildContext context) {
           return Container(
-            height: 600.0,
+            height: MediaQuery.of(context).size.height * 0.82,
             child: Column(
               children: <Widget>[
                 Container(
@@ -234,8 +234,8 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
         ? Column(
             children: <Widget>[
               Container(
-                height: 270.0,
-                width: 270.0,
+                height: MediaQuery.of(context).size.height * 0.4,
+                width: MediaQuery.of(context).size.height * 0.4,
                 alignment: Alignment.topCenter,
                 child: FlareActor(
                   'assets/NoEvent.flr',

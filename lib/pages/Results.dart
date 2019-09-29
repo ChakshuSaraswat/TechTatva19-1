@@ -1,7 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:techtatva19/DataModel.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flare_flutter/flare_actor.dart';
+import 'package:techtatva19/pages/Login.dart';
 import '../main.dart';
 
 class Results extends StatefulWidget {
@@ -14,10 +16,14 @@ List<EventData> eventsWithResults;
 class _ResultsState extends State<Results> with TickerProviderStateMixin {
   @override
   void initState() {
+    print("object");
     _resultsForEvents();
     // TODO: implement initState
     super.initState();
   }
+
+  // @override
+  // bool get wantKeepAlive => false;
 
   _resultsForEvents() {
     eventsWithResults = [];
@@ -33,6 +39,13 @@ class _ResultsState extends State<Results> with TickerProviderStateMixin {
     return eventsWithResults;
   }
 
+  // _doThis() async {
+  //   print("eeee");
+  //   Dio dio = new Dio();
+  //   var resp = await dio.get("/userProfile");
+  //   print(resp);
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,7 +56,6 @@ class _ResultsState extends State<Results> with TickerProviderStateMixin {
             Icons.search,
             color: Colors.black,
           ),
-          onPressed: () {},
         ),
         body: NestedScrollView(
           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {

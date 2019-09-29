@@ -1,25 +1,51 @@
 import 'dart:io';
-
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techtatva19/pages/Home.dart';
 import 'package:techtatva19/pages/Schedule.dart';
 import 'package:techtatva19/pages/Categories.dart';
 import 'package:techtatva19/pages/Results.dart';
+import 'package:techtatva19/pages/Login.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'DataModel.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  runApp(MyApp());
+}
+
+_startUserCache() async {
+  preferences = await SharedPreferences.getInstance();
+  isLoggedIn = preferences.getBool('isLoggedIn') ?? false;
+  print(isLoggedIn);
+
+  if (isLoggedIn){
+    user = UserData(
+      id: int.parse(preferences.getString('userId')),
+      name: preferences.getString('userName'),
+      regNo: preferences.getString('userReg'),
+      mobilNumber: preferences.getString('userMob'),
+      emailId: preferences.getString('userEmail'),
+      qrCode: preferences.getString('userQR'),
+      collegeName: preferences.getString('userCollege')
+    );
+  }
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    _startUserCache();
     return MaterialApp(
       showPerformanceOverlay: false,
       debugShowCheckedModeBanner: false,
       title: 'TechTatva',
       theme: ThemeData(
+        canvasColor: Colors.black,
         fontFamily: 'Product-Sans',
         brightness: Brightness.dark,
       ),
@@ -29,11 +55,14 @@ class MyApp extends StatelessWidget {
 }
 
 TextStyle headingStyle = TextStyle(fontSize: 18.0, fontWeight: FontWeight.w400);
-SharedPreferences _preferences;
+SharedPreferences preferences;
 List<ScheduleData> allSchedule = [];
 List<CategoryData> allCategories = [];
 List<EventData> allEvents = [];
 List<ResultData> allResults = [];
+
+bool isLoggedIn;
+bool fromHome;
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -43,6 +72,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   PageController _pageController;
   int _page = 0;
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -56,7 +87,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _startupCache() async {
-    _preferences = await SharedPreferences.getInstance();
     _cacheSchedule();
     _cacheCategories();
     _cacheEvents();
@@ -67,7 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final response =
           await http.get(Uri.encodeFull("https://api.techtatva.in/schedule"));
-      _preferences.setString('Schedule', json.encode(response.body));
+      preferences.setString('Schedule', json.encode(response.body));
     } catch (e) {
       print(e);
     }
@@ -77,7 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final response =
           await http.get(Uri.encodeFull("https://api.techtatva.in/categories"));
-      _preferences.setString('Categories', json.encode(response.body));
+      preferences.setString('Categories', json.encode(response.body));
     } catch (e) {
       print(e);
       print("CAT ERRP");
@@ -88,7 +118,7 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final response =
           await http.get(Uri.encodeFull("https://api.techtatva.in/events"));
-      _preferences.setString('Events', json.encode(response.body));
+      preferences.setString('Events', json.encode(response.body));
     } catch (e) {
       print(e);
       print("error in fetching events");
@@ -99,7 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final response =
           await http.get(Uri.encodeFull("https://api.mitrevels.in/results"));
-      _preferences.setString('Results', json.encode(response.body));
+      preferences.setString('Results', json.encode(response.body));
     } catch (e) {
       print(e);
       print("Error in fetching results");
@@ -138,7 +168,71 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      key: _scaffoldKey,
       child: Scaffold(
+        appBar: (_page == 1 || _page == 2 || _page == 3 || _page == 4)
+            ? null
+            : AppBar(
+                centerTitle: true,
+                backgroundColor: Colors.black,
+                title: Text(
+                  "Home",
+                ),
+              ),
+        drawer: Drawer(
+          child: ListView(
+            children: <Widget>[
+              UserAccountsDrawerHeader(
+                decoration: BoxDecoration(color: Colors.black),
+                accountName: Container(
+                  margin: EdgeInsets.only(top: 30.0),
+                  child: Text(
+                    "TechTatva'19",
+                    style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 20.0,
+                        color: Colors.greenAccent.withOpacity(0.8)),
+                  ),
+                ),
+                accountEmail: Text(
+                  "Embracing Contraries.",
+                  style: TextStyle(
+                      fontWeight: FontWeight.w300, color: Colors.white70),
+                ),
+                currentAccountPicture: CircleAvatar(
+                  backgroundImage: AssetImage(
+                    'assets/logo_white.jpg',
+                  ),
+                  radius: 90.0,
+                ),
+              ),
+              Container(
+                height: 0.5,
+                margin: EdgeInsets.only(left: 15.0),
+                color: Colors.greenAccent.withOpacity(1.0),
+              ),
+              _buildDrawerTile(FontAwesomeIcons.userAlt, 'User Profile',
+                  'Know your details.'),
+              _buildDrawerTile(FontAwesomeIcons.creditCard, 'Delegate Cards',
+                  'Cards needed for various Events'),
+              Container(
+                height: 0.5,
+                margin: EdgeInsets.only(left: 15.0),
+                color: Colors.greenAccent.withOpacity(1.0),
+              ),
+              _buildDrawerTile(FontAwesomeIcons.moneyBillAlt, 'Our Sponsors',
+                  "Explore our Sponsors!"),
+              _buildDrawerTile(FontAwesomeIcons.infoCircle, 'About Us',
+                  "Find out more about TechTatva."),
+              Container(
+                height: 0.5,
+                margin: EdgeInsets.only(left: 15.0),
+                color: Colors.greenAccent.withOpacity(1.0),
+              ),
+              _buildDrawerTile(Icons.developer_mode, 'Developers', ""),
+            ],
+          ),
+        ),
         body: PageView(
           physics: NeverScrollableScrollPhysics(),
           controller: _pageController,
@@ -147,10 +241,9 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             Home(),
             Schedule(),
-            //Container(),
-            //Container(),
             Categories(),
             Results(),
+            LoginPage(),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
@@ -162,9 +255,22 @@ class _MyHomePageState extends State<MyHomePage> {
             _buildBottomNavBarItem("Schedule", Icon(Icons.schedule)),
             _buildBottomNavBarItem("Categories", Icon(Icons.category)),
             _buildBottomNavBarItem("Results", Icon(Icons.assessment)),
+            _buildBottomNavBarItem("User", Icon(Icons.person))
           ],
         ),
       ),
+    );
+  }
+
+  _buildDrawerTile(IconData icon, String title, String subtitle) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        size: 20.0,
+      ),
+      subtitle: Text(subtitle),
+      title: Text(title),
+      onTap: () {},
     );
   }
 }
@@ -172,7 +278,7 @@ class _MyHomePageState extends State<MyHomePage> {
 _fetchEvents() async {
   List<EventData> events = [];
 
-  _preferences = await SharedPreferences.getInstance();
+  preferences = await SharedPreferences.getInstance();
 
   var jsonData;
 
@@ -190,7 +296,7 @@ _fetchEvents() async {
   }
 
   try {
-    String data = _preferences.getString('Events') ?? null;
+    String data = preferences.getString('Events') ?? null;
 
     if (data != null && !isCon) {
       jsonData = jsonDecode(jsonDecode(data));
@@ -252,7 +358,7 @@ Future<String> loadResults() async {
 _fetchResults() async {
   List<ResultData> results = [];
 
-  _preferences = await SharedPreferences.getInstance();
+  preferences = await SharedPreferences.getInstance();
 
   var jsonData;
 
@@ -269,8 +375,8 @@ _fetchResults() async {
     isCon = false;
   }
 
-  try {
-    String data = _preferences.getString('Results') ?? null;
+  try {  
+    String data = preferences.getString('Results') ?? null;
 
     if (data != null && !isCon) {
       jsonData = jsonDecode(jsonDecode(data));
@@ -310,7 +416,7 @@ _fetchResults() async {
 _fetchCategories() async {
   List<CategoryData> category = [];
 
-  _preferences = await SharedPreferences.getInstance();
+  preferences = await SharedPreferences.getInstance();
 
   var jsonData;
 
@@ -328,7 +434,7 @@ _fetchCategories() async {
   }
 
   try {
-    String data = _preferences.getString('Categories') ?? null;
+    String data = preferences.getString('Categories') ?? null;
 
     if (data != null && !isCon) {
       jsonData = jsonDecode(jsonDecode(data));
@@ -387,16 +493,14 @@ Future<String> loadCategories() async {
     print("lol ho gaya");
     return "success";
   }
-  print(allCategories.length);
+  print('${allCategories.length}');
   return "success";
 }
 
 _fetchSchedule() async {
   List<ScheduleData> schedule = [];
 
-  _preferences = await SharedPreferences.getInstance();
-
-  String data = _preferences.getString('Schedule') ?? null;
+  preferences = await SharedPreferences.getInstance();
 
   var jsonData;
 
@@ -414,6 +518,7 @@ _fetchSchedule() async {
   }
 
   try {
+    String data = preferences.getString('Schedule') ?? null;
     if (data == null && !isCon) {
       final response =
           await http.get(Uri.encodeFull("https://api.techtatva.in/schedule"));
@@ -530,6 +635,10 @@ class SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
   static buildSliverAppBar(String name, String image) {
     return SliverAppBar(
+      leading: Icon(
+        Icons.ac_unit,
+        color: Colors.transparent,
+      ),
       backgroundColor: Colors.black,
       expandedHeight: 250.0,
       floating: false,
@@ -541,14 +650,7 @@ class SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
               color: Colors.black.withOpacity(0.55),
               colorBlendMode: BlendMode.darken,
               fit: BoxFit.cover)),
-      actions: <Widget>[
-        Container(
-          child: IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.satellite),
-          ),
-        )
-      ],
+      actions: <Widget>[],
     );
   }
 }
