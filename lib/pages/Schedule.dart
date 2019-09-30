@@ -1,27 +1,28 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import "package:techtatva19/main.dart";
 import "../main.dart";
 import 'dart:async';
-import 'package:techtatva19/DataModel.dart';
+import 'package:techtatva19/pages/Login.dart';
+import 'package:techtatva19/models/ScheduleModel.dart';
+import 'package:techtatva19/models/CategoryModel.dart';
 
 class Schedule extends StatefulWidget {
   @override
   _ScheduleState createState() => _ScheduleState();
 }
 
-//List<ScheduleData> allSchedule = [];
-
 class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
   bool isFABTapped = false;
 
   SharedPreferences _preferences;
-
-//  allSchedule = [];
-
   _buildFAB() {
     return FloatingActionButton(
       backgroundColor: Colors.greenAccent,
@@ -71,8 +72,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                   _buildCard(scheduleForDay(allSchedule, 'Saturday'), context),
                 ],
               ),
-            )
-            ),
+            )),
       ),
     );
   }
@@ -108,10 +108,113 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
         ),
       );
 
+  _registerForEvent(int eventId, context) async {
+    print("tapped");
+    print(eventId);
+
+    Directory tempDir = await getTemporaryDirectory();
+    String tempPath = tempDir.path;
+
+    var cookieJar = PersistCookieJar(
+        dir: tempPath, ignoreExpires: true, persistSession: true);
+
+    dio.interceptors.add(CookieManager(cookieJar));
+    print("efefefef");
+    var response = await dio.post("/createteam", data: {"eventid": eventId});
+
+    print(response.statusCode);
+    print(response.data);
+
+    if (response.statusCode == 200 && response.data['success'] == true) {
+      print("object");
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: new Text("Success!"),
+            content: Text(
+                "You have successfully registered for ${getEventNameFromID(eventId)}. Your team ID is ${response.data['data']}"),
+            actions: <Widget>[
+              new FlatButton(
+                child: new Text("Close"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else if (response.statusCode == 200 &&
+        response.data['msg'] == "User already registered for event") {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: new Text("Oops!"),
+            content: Text(
+                "It seems like you have already registered for ${getEventNameFromID(eventId)}. Check your registered events in the User Section."),
+            actions: <Widget>[
+              new FlatButton(
+                child: new Text("Okay"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else if (response.statusCode == 200 &&
+        response.data['msg'] == "Card for event not bought") {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: new Text("Oops!"),
+            content: Text(
+                "It seems like you have not bought the Delegate Card required for ${getEventNameFromID(eventId)}."),
+            actions: <Widget>[
+              new FlatButton(
+                child: new Text("Close"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: new Text("Oops!"),
+            content: Text(
+                "Whoopsie there seems to be some error. Please check your connecting and try"),
+            actions: <Widget>[
+              new FlatButton(
+                child: new Text(""),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  getEventNameFromID(int id) {
+    for (var event in allEvents) {
+      if (id == event.id) return event.name;
+    }
+  }
+
   _showBottomModalSheet(BuildContext context, ScheduleData schedule) {
     TabController _controller = TabController(length: 2, vsync: this);
-
-    print(allCategories.length);
 
     CategoryData scheduleCategory;
 
@@ -130,7 +233,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
         );
     }
 
-    print(scheduleCategory.name);
+//    print(scheduleCategory.name);
 
     showModalBottomSheet(
         backgroundColor: Colors.black,
@@ -138,7 +241,9 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
         context: context,
         builder: (BuildContext context) {
           return Container(
-              height: fromHome ? MediaQuery.of(context).size.height * 0.73 : MediaQuery.of(context).size.height * 0.75,
+              height: fromHome
+                  ? MediaQuery.of(context).size.height * 0.73
+                  : MediaQuery.of(context).size.height * 0.75,
               child: Column(
                 children: <Widget>[
                   Container(
@@ -149,19 +254,56 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                       style: TextStyle(fontSize: 26.0),
                     ),
                   ),
-                  FlatButton(
-                    onPressed: () {},
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(5.0),
-                      child: Container(
-                        color: Colors.greenAccent.shade400.withOpacity(0.7),
-                        height: MediaQuery.of(context).size.height * 0.055,
-                        width: MediaQuery.of(context).size.width,
-                        alignment: Alignment.center,
-                        child: Text(
-                          "Register Now",
-                          style: TextStyle(
-                            fontSize: 17.0,
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 15.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                          color: Colors.black,
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            stops: [0.1, 0.3, 0.7, 0.9],
+                            colors: [
+                              Colors.greenAccent.withOpacity(0.9),
+                              Colors.greenAccent.withOpacity(0.7),
+                              Colors.teal.withOpacity(0.8),
+                              Colors.teal.withOpacity(0.6),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(4.0)),
+                      height: MediaQuery.of(context).size.height * 0.055,
+                      width: MediaQuery.of(context).size.width,
+                      alignment: Alignment.center,
+                      child: MaterialButton(
+                        onPressed: () {
+                          !isLoggedIn
+                              ? showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: new Text("Oops!"),
+                                      content: Text("It seems like you are not logged in, please login first in our user section."),
+                                      actions: <Widget>[
+                                        new FlatButton(
+                                          child: new Text("Close"),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                )
+                              : _registerForEvent(schedule.eventId, context);
+                        },
+                        splashColor: Colors.greenAccent,
+                        child: Container(
+                          width: 300.0,
+                          alignment: Alignment.center,
+                          child: Text(
+                            "Register Now",
+                            style:
+                                TextStyle(fontSize: 16.0, color: Colors.white),
                           ),
                         ),
                       ),
@@ -179,7 +321,9 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                     ],
                   ),
                   Container(
-                    height: fromHome ? MediaQuery.of(context).size.height * 0.48 : MediaQuery.of(context).size.height * 0.5,
+                    height: fromHome
+                        ? MediaQuery.of(context).size.height * 0.48
+                        : MediaQuery.of(context).size.height * 0.5,
                     //color: Colors.black,
                     child: TabBarView(
                       controller: _controller,
@@ -289,8 +433,10 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
         alignment: Alignment.bottomCenter,
         child: Container(
           color: Colors.black,
-          padding: EdgeInsets.fromLTRB(2.0,fromHome ? 0.0 : 15,2,2),
-          height: fromHome ? MediaQuery.of(context).size.height * 0.8 : MediaQuery.of(context).size.height * 0.74,
+          padding: EdgeInsets.fromLTRB(2.0, fromHome ? 0.0 : 15, 2, 2),
+          height: fromHome
+              ? MediaQuery.of(context).size.height * 0.8
+              : MediaQuery.of(context).size.height * 0.74,
           child: ListView.builder(
             itemCount: allSchedule.length,
             itemBuilder: (BuildContext context, int index) {

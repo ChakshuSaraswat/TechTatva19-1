@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:techtatva19/DataModel.dart';
+import 'package:techtatva19/models/CategoryModel.dart';
+import 'package:techtatva19/models/ScheduleModel.dart';
 import 'package:http/http.dart' as http;
 import 'package:techtatva19/pages/Schedule.dart';
 import 'dart:async';

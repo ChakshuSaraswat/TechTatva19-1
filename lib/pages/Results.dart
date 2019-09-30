@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:techtatva19/DataModel.dart';
+import 'package:techtatva19/models/EventModel.dart';
+import 'package:techtatva19/models/ResultModel.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flare_flutter/flare_actor.dart';
 import 'package:techtatva19/pages/Login.dart';
@@ -18,12 +19,8 @@ class _ResultsState extends State<Results> with TickerProviderStateMixin {
   void initState() {
     print("object");
     _resultsForEvents();
-    // TODO: implement initState
     super.initState();
   }
-
-  // @override
-  // bool get wantKeepAlive => false;
 
   _resultsForEvents() {
     eventsWithResults = [];

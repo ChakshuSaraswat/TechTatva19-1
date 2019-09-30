@@ -12,34 +12,62 @@ import 'package:techtatva19/pages/Results.dart';
 import 'package:techtatva19/pages/Login.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'DataModel.dart';
+import 'package:techtatva19/models/CategoryModel.dart';
+import 'package:techtatva19/models/ScheduleModel.dart';
+import 'package:techtatva19/models/EventModel.dart';
+import 'package:techtatva19/models/DelegateCardModel.dart';
+import 'package:techtatva19/models/UserModel.dart';
+import 'package:techtatva19/models/ResultModel.dart';
 
 void main() {
   runApp(MyApp());
 }
 
 _startUserCache() async {
-  preferences = await SharedPreferences.getInstance();
-  isLoggedIn = preferences.getBool('isLoggedIn') ?? false;
-  print(isLoggedIn);
+  try {
+    preferences = await SharedPreferences.getInstance();
+    isLoggedIn = preferences.getBool('isLoggedIn') ?? false;
+    print(isLoggedIn);
 
-  if (isLoggedIn){
-    user = UserData(
-      id: int.parse(preferences.getString('userId')),
-      name: preferences.getString('userName'),
-      regNo: preferences.getString('userReg'),
-      mobilNumber: preferences.getString('userMob'),
-      emailId: preferences.getString('userEmail'),
-      qrCode: preferences.getString('userQR'),
-      collegeName: preferences.getString('userCollege')
-    );
+    dio.options.baseUrl = "https://register.techtatva.in";
+    dio.options.connectTimeout = 500000000; //5s
+    dio.options.receiveTimeout = 300000000;
+
+    if (isLoggedIn) {
+      try {
+        var resp = await dio.get("/registeredEvents");
+
+        if (resp.statusCode == 200) {
+          print(resp.data);
+          print("SUCCESS AF");
+        }
+      } catch (e) {
+        print("EDED$e");
+      }
+    }
+
+    if (isLoggedIn) {
+      try {
+        user = UserData(
+            id: int.parse(preferences.getString('userId')),
+            name: preferences.getString('userName'),
+            regNo: preferences.getString('userReg'),
+            mobilNumber: preferences.getString('userMob'),
+            emailId: preferences.getString('userEmail'),
+            qrCode: preferences.getString('userQR'),
+            collegeName: preferences.getString('userCollege'));
+      } catch (e) {
+        print(e);
+      }
+    }
+  } catch (e) {
+    print(e);
   }
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    _startUserCache();
     return MaterialApp(
       showPerformanceOverlay: false,
       debugShowCheckedModeBanner: false,
@@ -87,6 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _startupCache() async {
+    _startUserCache();
     _cacheSchedule();
     _cacheCategories();
     _cacheEvents();
@@ -97,9 +126,11 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final response =
           await http.get(Uri.encodeFull("https://api.techtatva.in/schedule"));
-      preferences.setString('Schedule', json.encode(response.body));
+      if (response == null) return;
+      if (response.statusCode == 200)
+        preferences.setString('Schedule', json.encode(response.body));
     } catch (e) {
-      print(e);
+      print("schedulBT$e");
     }
   }
 
@@ -107,7 +138,9 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final response =
           await http.get(Uri.encodeFull("https://api.techtatva.in/categories"));
-      preferences.setString('Categories', json.encode(response.body));
+      if (response == null) return;
+      if (response.statusCode == 200)
+        preferences.setString('Categories', json.encode(response.body));
     } catch (e) {
       print(e);
       print("CAT ERRP");
@@ -118,7 +151,9 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final response =
           await http.get(Uri.encodeFull("https://api.techtatva.in/events"));
-      preferences.setString('Events', json.encode(response.body));
+      if (response.statusCode == 200)
+        preferences.setString('Events', json.encode(response.body));
+      if (response == null) return;
     } catch (e) {
       print(e);
       print("error in fetching events");
@@ -129,7 +164,9 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       final response =
           await http.get(Uri.encodeFull("https://api.mitrevels.in/results"));
-      preferences.setString('Results', json.encode(response.body));
+      if (response.statusCode == 200)
+        preferences.setString('Results', json.encode(response.body));
+      if (response == null) return;
     } catch (e) {
       print(e);
       print("Error in fetching results");
@@ -167,6 +204,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    fromHome = false;
+
     return SafeArea(
       key: _scaffoldKey,
       child: Scaffold(
@@ -343,14 +382,14 @@ _fetchEvents() async {
 
 Future<String> loadEvents() async {
   allEvents = await _fetchEvents();
-  print(allEvents.length);
-  print("WE GOT IT");
+  //print(allEvents.length);
+  print("WE GOT events");
   return "success";
 }
 
 Future<String> loadResults() async {
   allResults = await _fetchResults();
-  print(allResults.length);
+  //print(allResults.length);
   print("GOT THEM RESULTS BOI");
   return "success";
 }
@@ -375,10 +414,11 @@ _fetchResults() async {
     isCon = false;
   }
 
-  try {  
+  try {
     String data = preferences.getString('Results') ?? null;
 
     if (data != null && !isCon) {
+      print("here res");
       jsonData = jsonDecode(jsonDecode(data));
     } else {
       final response =
@@ -433,17 +473,23 @@ _fetchCategories() async {
     isCon = false;
   }
 
-  try {
-    String data = preferences.getString('Categories') ?? null;
+  print("ISCONN$isCon");
 
-    if (data != null && !isCon) {
-      jsonData = jsonDecode(jsonDecode(data));
-    } else {
+  try {
+    String data = preferences.getString('Categories') ?? "";
+
+    if (data == "" && isCon) {
       final response =
           await http.get(Uri.encodeFull("https://api.techtatva.in/categories"));
 
       if (response.statusCode == 200) jsonData = json.decode(response.body);
     }
+
+    else {
+      jsonData = jsonDecode(jsonDecode(data));
+    }
+
+
 
     for (var json in jsonData['data']) {
       try {
@@ -493,7 +539,7 @@ Future<String> loadCategories() async {
     print("lol ho gaya");
     return "success";
   }
-  print('${allCategories.length}');
+  //print('${allCategories.length}');
   return "success";
 }
 
@@ -518,8 +564,8 @@ _fetchSchedule() async {
   }
 
   try {
-    String data = preferences.getString('Schedule') ?? null;
-    if (data == null && !isCon) {
+    String data = preferences.getString('Schedule') ?? "";
+    if (data == "" && isCon) {
       final response =
           await http.get(Uri.encodeFull("https://api.techtatva.in/schedule"));
 
@@ -527,7 +573,9 @@ _fetchSchedule() async {
         jsonData = json.decode(response.body);
       }
     } else {
-      print("CACHEDDDDD");
+      print(data);
+      print("CACHEDDDDthisisD");
+      print(jsonDecode(jsonDecode(data)));
       jsonData = jsonDecode(jsonDecode(data));
     }
 
@@ -644,12 +692,14 @@ class SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
       floating: false,
       pinned: true,
       flexibleSpace: FlexibleSpaceBar(
-          centerTitle: true,
-          title: Text(name, style: headingStyle),
-          background: Image.asset(image,
-              color: Colors.black.withOpacity(0.55),
-              colorBlendMode: BlendMode.darken,
-              fit: BoxFit.cover)),
+        centerTitle: true,
+        title: Text(name, style: headingStyle),
+        background: Image.asset(image,
+            color: Colors.black.withOpacity(0.55),
+            colorBlendMode: BlendMode.darken,
+            fit: BoxFit.cover),
+        collapseMode: CollapseMode.parallax,
+      ),
       actions: <Widget>[],
     );
   }

@@ -8,7 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techtatva19/main.dart';
 import 'dart:convert';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
-import 'package:techtatva19/DataModel.dart';
+import 'package:techtatva19/models/UserModel.dart';
+import 'package:techtatva19/pages/RegisteredEvents.dart';
 
 UserData user;
 
@@ -25,14 +26,15 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   bool isVerifying = false;
 
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    //   _cacheUserDetails();
-    dio.options.baseUrl = "https://register.techtatva.in";
-    dio.options.connectTimeout = 5000; //5s
-    dio.options.receiveTimeout = 3000;
+    //_cacheUserDetails();
+
   }
 
   final Shader linearGradient = LinearGradient(
@@ -87,6 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: <Widget>[
                       TextFormField(
+                        controller: _emailController,
                         style: TextStyle(color: Colors.white),
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
@@ -99,6 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                             )),
                       ),
                       TextFormField(
+                        controller: _passwordController,
                         style: TextStyle(color: Colors.white),
                         obscureText: true,
                         textInputAction: TextInputAction.done,
@@ -147,7 +151,8 @@ class _LoginPageState extends State<LoginPage> {
                       alignment: Alignment.center,
                       child: MaterialButton(
                         onPressed: () {
-                          _loginRequest("akshit.razor@gmail.com", "xxakshitxx");
+                          _loginRequest(
+                              _emailController.text, _passwordController.text);
                         },
                         splashColor: Colors.greenAccent,
                         child: Container(
@@ -235,8 +240,7 @@ class _LoginPageState extends State<LoginPage> {
                 children: <Widget>[
                   _buildUserTile(context, "Delegate ID", user.id.toString()),
                   _buildUserTile(context, "Registration No.", user.regNo),
-                  _buildUserTile(
-                      context, "College", user.collegeName),
+                  _buildUserTile(context, "College", user.collegeName),
                   _buildUserTile(context, "Phone", user.mobilNumber),
                   _buildUserTile(context, "Email ID", user.emailId),
                 ],
@@ -249,7 +253,7 @@ class _LoginPageState extends State<LoginPage> {
               width: MediaQuery.of(context).size.width * 0.9,
             ),
             Container(
-              margin: EdgeInsets.symmetric(vertical: 16.0),
+                margin: EdgeInsets.symmetric(vertical: 16.0),
                 child: FutureBuilder(
                     future: _getQRCode(context),
                     builder: (context, snapshot) {
@@ -262,7 +266,46 @@ class _LoginPageState extends State<LoginPage> {
                       return snapshot.data;
                     })),
             Container(
-              margin: EdgeInsets.fromLTRB(90.0,10,90.0,0),
+              margin: EdgeInsets.fromLTRB(50.0, 10, 50.0, 6.0),
+              child: Container(
+                decoration: BoxDecoration(
+                    color: Colors.black,
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      stops: [0.1, 0.3, 0.7, 0.9],
+                      colors: [
+                        Colors.blue.withOpacity(0.9),
+                        Colors.blue.withOpacity(0.9),
+                        Colors.blueAccent.withOpacity(0.9),
+                        Colors.blueAccent.withOpacity(0.9),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(25.0)),
+                height: MediaQuery.of(context).size.height * 0.05,
+                width: MediaQuery.of(context).size.width,
+                alignment: Alignment.center,
+                child: MaterialButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<Null>(builder: (BuildContext context) {
+                    fromHome = true;
+                    return new RegisteredEvents();
+                  }));
+                  },
+                  child: Container(
+                    width: 300.0,
+                    alignment: Alignment.center,
+                    child: Text(
+                      "Event Registration",
+                      style: TextStyle(fontSize: 16.0, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.fromLTRB(50.0, 10, 50.0, 0),
               child: Container(
                 decoration: BoxDecoration(
                     color: Colors.black,
@@ -366,7 +409,7 @@ class _LoginPageState extends State<LoginPage> {
       String type = "invisible";
 
       var cookieJar = PersistCookieJar(
-          dir: tempPath, ignoreExpires: false, persistSession: false);
+          dir: tempPath, ignoreExpires: true, persistSession: true);
 
       dio.interceptors.add(CookieManager(cookieJar));
 
@@ -387,9 +430,6 @@ class _LoginPageState extends State<LoginPage> {
         var resp = await dio.get("/userProfile");
         isLoggedIn = true;
 
-        print("******");
-        print(resp.data['data']['id']);
-
         user = UserData(
             id: resp.data['data']['id'],
             name: resp.data['data']['name'],
@@ -398,8 +438,6 @@ class _LoginPageState extends State<LoginPage> {
             emailId: resp.data['data']['email'],
             qrCode: resp.data['data']['qr'],
             collegeName: resp.data['data']['collname']);
-        print("******");
-        print(user.name);
         preferences.setString('userId', user.id.toString());
         preferences.setString('userName', user.name);
         preferences.setString('userReg', user.regNo.toString());
@@ -407,8 +445,77 @@ class _LoginPageState extends State<LoginPage> {
         preferences.setString('userEmail', user.emailId);
         preferences.setString('userQR', user.qrCode);
         preferences.setString('userCollege', user.collegeName);
+        preferences.setString('userPassword', password);
         isVerifying = false;
         setState(() {});
+      } else if (response.statusCode == 200 &&
+          response.data['msg'] == "Invalid email/password combination") {
+        _passwordController.clear();
+        _emailController.clear();
+        isVerifying = false;
+        setState(() {});
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: new Text("Invalid email or password"),
+              content: new Text(
+                  "Please check the email or password you have entered"),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text("Try Again"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } else if (response.statusCode == 200 &&
+          response.data['msg'] == "Invalid input") {
+        _passwordController.clear();
+        _emailController.clear();
+        isVerifying = false;
+        setState(() {});
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: new Text("Invalid Input"),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text("Try Again"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        _passwordController.clearComposing();
+        _emailController.clear();
+        isVerifying = false;
+        setState(() {});
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: new Text(
+                  "There seems to be some error. Please ensure you are connected to the internet and try again"),
+              actions: <Widget>[
+                new FlatButton(
+                  child: new Text("Close"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
       }
     } catch (e) {
       print(e);
