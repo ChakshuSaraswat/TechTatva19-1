@@ -208,8 +208,22 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
   }
 
   getEventNameFromID(int id) {
+    print(allEvents.length);
+
     for (var event in allEvents) {
       if (id == event.id) return event.name;
+    }
+  }
+
+  getCanRegister(int id) {
+
+    print(allEvents.length);
+
+    for (var event in allEvents) {
+      print(event.canRegister);
+      if (event.id == id) {
+        return event.canRegister;
+      }
     }
   }
 
@@ -233,7 +247,8 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
         );
     }
 
-//    print(scheduleCategory.name);
+    print(schedule.name);
+    print(getCanRegister(schedule.eventId));
 
     showModalBottomSheet(
         backgroundColor: Colors.black,
@@ -256,58 +271,68 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                   ),
                   Container(
                     margin: EdgeInsets.symmetric(horizontal: 15.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                          color: Colors.black,
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            stops: [0.1, 0.3, 0.7, 0.9],
-                            colors: [
-                              Colors.greenAccent.withOpacity(0.9),
-                              Colors.greenAccent.withOpacity(0.7),
-                              Colors.teal.withOpacity(0.8),
-                              Colors.teal.withOpacity(0.6),
-                            ],
+                    child: getCanRegister(schedule.eventId) == 1
+                        ? Container(
+                            decoration: BoxDecoration(
+                                color: Colors.black,
+                                gradient: LinearGradient(
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                  stops: [0.1, 0.3, 0.7, 0.9],
+                                  colors: [
+                                    Colors.greenAccent.withOpacity(0.9),
+                                    Colors.greenAccent.withOpacity(0.7),
+                                    Colors.teal.withOpacity(0.8),
+                                    Colors.teal.withOpacity(0.6),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(4.0)),
+                            height: MediaQuery.of(context).size.height * 0.055,
+                            width: MediaQuery.of(context).size.width,
+                            alignment: Alignment.center,
+                            child: MaterialButton(
+                              onPressed: () {
+                                !isLoggedIn
+                                    ? showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: new Text("Oops!"),
+                                            content: Text(
+                                                "It seems like you are not logged in, please login first in our user section."),
+                                            actions: <Widget>[
+                                              new FlatButton(
+                                                child: new Text("Close"),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      )
+                                    : _registerForEvent(
+                                        schedule.eventId, context);
+                              },
+                              splashColor: Colors.greenAccent,
+                              child: Container(
+                                width: 300.0,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "Register Now",
+                                  style: TextStyle(
+                                      fontSize: 16.0, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              "Registerations for this event are closed.",
+                              style: TextStyle(color: Colors.redAccent),
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(4.0)),
-                      height: MediaQuery.of(context).size.height * 0.055,
-                      width: MediaQuery.of(context).size.width,
-                      alignment: Alignment.center,
-                      child: MaterialButton(
-                        onPressed: () {
-                          !isLoggedIn
-                              ? showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: new Text("Oops!"),
-                                      content: Text("It seems like you are not logged in, please login first in our user section."),
-                                      actions: <Widget>[
-                                        new FlatButton(
-                                          child: new Text("Close"),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                )
-                              : _registerForEvent(schedule.eventId, context);
-                        },
-                        splashColor: Colors.greenAccent,
-                        child: Container(
-                          width: 300.0,
-                          alignment: Alignment.center,
-                          child: Text(
-                            "Register Now",
-                            style:
-                                TextStyle(fontSize: 16.0, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ),
                   ),
                   TabBar(
                     controller: _controller,
@@ -342,6 +367,11 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                                 Icon(Icons.timer), "Time:", getTime(schedule)),
                             _buildEventListTileInfo(Icon(Icons.location_on),
                                 "Venue:", schedule.location),
+                            _buildEventListTileInfo(
+                                Icon(Icons.credit_card),
+                                "Delegate Card",
+                                getDelCardNameFromEventID(schedule.eventId) ??
+                                    "unavailable"),
                             _buildEventListTileInfo(Icon(Icons.people),
                                 "Team Size:", getTeamSize(schedule)),
                             Container(
@@ -416,16 +446,29 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                   fontWeight: FontWeight.w100,
                 ),
               ),
-              Text(
-                value,
-                style: TextStyle(
-                    fontWeight: FontWeight.w400, color: Colors.white54),
+              Container(
+                width: 180.0,
+                child: Text(
+                  value,
+                  textAlign: TextAlign.end,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w400, color: Colors.white54),
+                ),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  getVisibleFrom(int id) {
+    for (var event in allEvents) {
+      if (event.id == id) {
+        return event.visible;
+      }
+    }
   }
 
   Widget _buildCard(List<ScheduleData> allSchedule, BuildContext context) =>
@@ -440,6 +483,11 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
           child: ListView.builder(
             itemCount: allSchedule.length,
             itemBuilder: (BuildContext context, int index) {
+              if (getVisibleFrom(allSchedule[index].eventId) == 0) {
+                print("NOPEEE");
+                return null;
+              }
+
               return Container(
                 padding: EdgeInsets.symmetric(vertical: 5.0),
                 child: Card(
@@ -595,4 +643,15 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
           ),
         ),
       );
+
+  getDelCardNameFromEventID(int eventId) {
+    int delId;
+    for (var event in allEvents) {
+      if (event.id == eventId) delId = event.delCardType;
+    }
+
+    for (var card in allCards) {
+      if (card.id == delId) return card.name;
+    }
+  }
 }

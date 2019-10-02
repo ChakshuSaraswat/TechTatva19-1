@@ -34,7 +34,6 @@ class _LoginPageState extends State<LoginPage> {
     // TODO: implement initState
     super.initState();
     //_cacheUserDetails();
-
   }
 
   final Shader linearGradient = LinearGradient(
@@ -287,11 +286,10 @@ class _LoginPageState extends State<LoginPage> {
                 alignment: Alignment.center,
                 child: MaterialButton(
                   onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<Null>(builder: (BuildContext context) {
-                    fromHome = true;
-                    return new RegisteredEvents();
-                  }));
+                    Navigator.of(context).push(MaterialPageRoute<Null>(
+                        builder: (BuildContext context) {
+                      return new RegisteredEvents();
+                    }));
                   },
                   child: Container(
                     width: 300.0,
@@ -367,7 +365,15 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   _logoutRequest() async {
+    Directory tempDir = await getTemporaryDirectory();
+    String tempPath = tempDir.path;
+
+    var cookieJar = PersistCookieJar(
+        dir: tempPath, ignoreExpires: true, persistSession: true);
+
+    dio.interceptors.add(CookieManager(cookieJar));
     var resp = await dio.get("/logout");
+
     if (resp.statusCode == 200) {
       print("NO");
       print("LOgged Out");
@@ -412,6 +418,8 @@ class _LoginPageState extends State<LoginPage> {
           dir: tempPath, ignoreExpires: true, persistSession: true);
 
       dio.interceptors.add(CookieManager(cookieJar));
+
+      print("tap");
 
       var response = await dio.post("/login", data: {
         "email": email,

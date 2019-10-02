@@ -60,12 +60,9 @@ flutter:
     - Schedule_crop.jpg
     - Categories_crop.png
     - Results_crop.jpg
-    - slider1.png
-    - slider2.png
-    - slider3.png
-    - slider4.png
     - logo_NEW_NEW.png
     - logo_white.jpg
+    - cat.png
 
   fonts:
     - family: Product-Sans

@@ -7,6 +7,8 @@ class EventData{
   final int minTeamSize;
   final int maxTeamSize;
   final int delCardType;
+  final int visible;
+  final int canRegister;
 
   EventData({
     this.id,
@@ -16,6 +18,8 @@ class EventData{
     this.description,
     this.minTeamSize,
     this.maxTeamSize,
-    this.delCardType
+    this.delCardType,
+    this.visible,
+    this.canRegister
   });
 }

@@ -254,8 +254,20 @@ class RegisteredEventsState extends State<RegisteredEvents> {
       var resp = await dio
           .post("/addmember", data: {'eventid': evendId, 'delid': result});
 
+      String msg;
+
       if (resp.statusCode == 200 && resp.data['success'] == true) {
         print("SCAN HO GAYA BHAIII");
+        msg = "You have successfully added a member to your team";
+      }
+
+      if (resp.data['msg'] == "Card for event not bought") {
+        msg =
+            "This user has not bought the card required for this particular event";
+      }
+
+      if (resp.data['msg'] == "User already registered for event") {
+        msg = "This user has already registered for this particular event";
       }
 
       print(resp.data);
@@ -264,7 +276,7 @@ class RegisteredEventsState extends State<RegisteredEvents> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: new Text("You have successfully added another team member"),
+            title: new Text(msg),
             actions: <Widget>[
               new FlatButton(
                 child: new Text("Close"),

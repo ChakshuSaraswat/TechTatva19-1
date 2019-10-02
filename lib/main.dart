@@ -88,6 +88,7 @@ List<ScheduleData> allSchedule = [];
 List<CategoryData> allCategories = [];
 List<EventData> allEvents = [];
 List<ResultData> allResults = [];
+List<DelegateCardModel> allCards = [];
 
 bool isLoggedIn;
 bool fromHome;
@@ -112,6 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
     loadSchedule();
     loadEvents();
     loadResults();
+    loadDelCards();
   }
 
   _startupCache() async {
@@ -120,6 +122,22 @@ class _MyHomePageState extends State<MyHomePage> {
     _cacheCategories();
     _cacheEvents();
     _cacheResults();
+    _cacheDelCards();
+  }
+
+  void _cacheDelCards() async {
+    try {
+      final response = await http
+          .get(Uri.encodeFull("https://api.techtatva.in/delegate_cards"));
+
+      if (response == null) return;
+
+      if (response.statusCode == 200)
+        preferences.setString('DelegateCards', json.encode(response.body));
+    } catch (e) {
+      print("problem with del carsd");
+      print(e);
+    }
   }
 
   void _cacheSchedule() async {
@@ -218,60 +236,44 @@ class _MyHomePageState extends State<MyHomePage> {
                   "Home",
                 ),
               ),
-        drawer: Drawer(
-          child: ListView(
-            children: <Widget>[
-              UserAccountsDrawerHeader(
-                decoration: BoxDecoration(color: Colors.black),
-                accountName: Container(
-                  margin: EdgeInsets.only(top: 30.0),
-                  child: Text(
-                    "TechTatva'19",
-                    style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 20.0,
-                        color: Colors.greenAccent.withOpacity(0.8)),
-                  ),
-                ),
-                accountEmail: Text(
-                  "Embracing Contraries.",
-                  style: TextStyle(
-                      fontWeight: FontWeight.w300, color: Colors.white70),
-                ),
-                currentAccountPicture: CircleAvatar(
-                  backgroundImage: AssetImage(
-                    'assets/logo_white.jpg',
-                  ),
-                  radius: 90.0,
-                ),
-              ),
-              Container(
-                height: 0.5,
-                margin: EdgeInsets.only(left: 15.0),
-                color: Colors.greenAccent.withOpacity(1.0),
-              ),
-              _buildDrawerTile(FontAwesomeIcons.userAlt, 'User Profile',
-                  'Know your details.'),
-              _buildDrawerTile(FontAwesomeIcons.creditCard, 'Delegate Cards',
-                  'Cards needed for various Events'),
-              Container(
-                height: 0.5,
-                margin: EdgeInsets.only(left: 15.0),
-                color: Colors.greenAccent.withOpacity(1.0),
-              ),
-              _buildDrawerTile(FontAwesomeIcons.moneyBillAlt, 'Our Sponsors',
-                  "Explore our Sponsors!"),
-              _buildDrawerTile(FontAwesomeIcons.infoCircle, 'About Us',
-                  "Find out more about TechTatva."),
-              Container(
-                height: 0.5,
-                margin: EdgeInsets.only(left: 15.0),
-                color: Colors.greenAccent.withOpacity(1.0),
-              ),
-              _buildDrawerTile(Icons.developer_mode, 'Developers', ""),
-            ],
-          ),
-        ),
+        // drawer: Drawer(
+        //   child: ListView(
+        //     children: <Widget>[
+        //       UserAccountsDrawerHeader(
+        //         decoration: BoxDecoration(color: Colors.black),
+        //         accountName: Container(
+        //           margin: EdgeInsets.only(top: 30.0),
+        //           child: Text(
+        //             "TechTatva'19",
+        //             style: TextStyle(
+        //                 fontWeight: FontWeight.w500,
+        //                 fontSize: 20.0,
+        //                 color: Colors.greenAccent.withOpacity(0.8)),
+        //           ),
+        //         ),
+        //         accountEmail: Text(
+        //           "Embracing Contraries.",
+        //           style: TextStyle(
+        //               fontWeight: FontWeight.w300, color: Colors.white70),
+        //         ),
+        //         currentAccountPicture: CircleAvatar(
+        //           backgroundImage: AssetImage(
+        //             'assets/logo_white.jpg',
+        //           ),
+        //           radius: 90.0,
+        //         ),
+        //       ),
+        //       Container(
+        //         height: 0.5,
+        //         margin: EdgeInsets.only(left: 15.0),
+        //         color: Colors.greenAccent.withOpacity(1.0),
+        //       ),
+        //       _buildDrawerTile(FontAwesomeIcons.infoCircle, 'About Us',
+        //           "Find out more about TechTatva."),
+        //       _buildDrawerTile(Icons.bug_report, 'Report a bug', ""),
+        //     ],
+        //   ),
+        // ),
         body: PageView(
           physics: NeverScrollableScrollPhysics(),
           controller: _pageController,
@@ -280,7 +282,6 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             Home(),
             Schedule(),
-            Categories(),
             Results(),
             LoginPage(),
           ],
@@ -292,7 +293,6 @@ class _MyHomePageState extends State<MyHomePage> {
           items: [
             _buildBottomNavBarItem("Home", Icon(Icons.home)),
             _buildBottomNavBarItem("Schedule", Icon(Icons.schedule)),
-            _buildBottomNavBarItem("Categories", Icon(Icons.category)),
             _buildBottomNavBarItem("Results", Icon(Icons.assessment)),
             _buildBottomNavBarItem("User", Icon(Icons.person))
           ],
@@ -356,6 +356,8 @@ _fetchEvents() async {
         var minTeamSize = json['minTeamSize'];
         var maxTeamSize = json['maxTeamSize'];
         var delCardType = json['delCardType'];
+        var visible = json['visible'];
+        var canReg = json['can_register'];
 
         EventData temp = EventData(
             id: id,
@@ -365,10 +367,11 @@ _fetchEvents() async {
             description: description,
             minTeamSize: minTeamSize,
             maxTeamSize: maxTeamSize,
-            delCardType: delCardType);
+            delCardType: delCardType,
+            visible: visible,
+            canRegister: canReg);
 
         events.add(temp);
-        // print(temp.description);
       } catch (e) {
         print(e);
         print("Error in parsing and fetching events");
@@ -387,9 +390,82 @@ Future<String> loadEvents() async {
   return "success";
 }
 
+Future<String> loadDelCards() async {
+  allCards = await _fetchCards();
+  print("got card");
+  return "success";
+}
+
+_fetchCards() async {
+  List<DelegateCardModel> cards = [];
+
+  preferences = await SharedPreferences.getInstance();
+
+  var jsonData;
+  var isCon;
+
+  try {
+    final result = await InternetAddress.lookup('google.com');
+    if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+      print('connected');
+      isCon = true;
+    }
+  } on SocketException catch (_) {
+    print('not connected');
+    isCon = false;
+  }
+
+  try {
+    String data = preferences.getString('DelegateCards') ?? "";
+    if (data == "" && isCon) {
+      final response = await http
+          .get(Uri.encodeFull("https://api.techtatva.in/delegate_cards"));
+
+      if (response.statusCode == 200) {
+        jsonData = json.decode(response.body);
+      }
+    } else {
+      print(data);
+      print("CACHEDDDDthisisD");
+      print(jsonDecode(jsonDecode(data)));
+      jsonData = jsonDecode(jsonDecode(data));
+    }
+
+    for (var json in jsonData['data']) {
+      try {
+        var id = json['id'];
+        var name = json['name'];
+        var desc = json['description'];
+        var mahePrice = json['MAHE_price'];
+        var nonPrice = json['non_price'];
+        var forSale = json['forSale'];
+        var payMode = json['payment_mode'];
+
+        DelegateCardModel temp = DelegateCardModel(
+            id: id,
+            name: name,
+            desc: desc,
+            mahePrice: mahePrice,
+            nonMahePrice: nonPrice,
+            forSale: forSale,
+            paymentMode: payMode);
+
+        cards.add(temp);
+
+        print("gotEm");
+      } catch (e) {
+        print("CANT DO IT");
+        print(e);
+      }
+    }
+  } catch (e) {
+    print(e);
+  }
+  return cards;
+}
+
 Future<String> loadResults() async {
   allResults = await _fetchResults();
-  //print(allResults.length);
   print("GOT THEM RESULTS BOI");
   return "success";
 }
@@ -483,13 +559,9 @@ _fetchCategories() async {
           await http.get(Uri.encodeFull("https://api.techtatva.in/categories"));
 
       if (response.statusCode == 200) jsonData = json.decode(response.body);
-    }
-
-    else {
+    } else {
       jsonData = jsonDecode(jsonDecode(data));
     }
-
-
 
     for (var json in jsonData['data']) {
       try {
@@ -534,6 +606,9 @@ Future<String> loadCategories() async {
         allCategories.add(item);
       }
     }
+    allCategories.sort((a, b) {
+      return a.name.compareTo(b.name);
+    });
   } catch (e) {
     print(e);
     print("lol ho gaya");
@@ -602,6 +677,7 @@ _fetchSchedule() async {
         );
 
         schedule.add(temp);
+        print("gotEm");
       } catch (e) {
         print("CANT DO IT");
         print(e);
@@ -615,7 +691,32 @@ _fetchSchedule() async {
 
 Future<String> loadSchedule() async {
   allSchedule = await _fetchSchedule();
+
+  print("Here at least");
+
+  Schedule rem = getInvisibleEvent();
+
+  allSchedule.remove(rem);
+
+  allSchedule.sort((a, b) {
+    return a.startTime.compareTo(b.startTime);
+  });
   return "success";
+}
+
+getInvisibleEvent() {
+  int id;
+  for (var event in allEvents) {
+    print(event.visible);
+    if (event.visible == 0) {
+      print(event.name);
+      id = event.id;
+    }
+  }
+
+  for (var sched in allSchedule) {
+    if (sched.eventId == id) return sched;
+  }
 }
 
 List<ScheduleData> scheduleForDay(List<ScheduleData> allSchedule, String day) {

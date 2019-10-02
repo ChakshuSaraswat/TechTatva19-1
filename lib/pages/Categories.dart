@@ -1,10 +1,16 @@
+import 'dart:io';
+
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techtatva19/models/CategoryModel.dart';
 import 'package:techtatva19/models/ScheduleModel.dart';
 import 'package:http/http.dart' as http;
 import 'package:techtatva19/pages/Schedule.dart';
 import 'dart:async';
+import 'Login.dart';
 import 'Schedule.dart';
 import 'dart:convert';
 import 'package:flare_flutter/flare_actor.dart';
@@ -509,6 +515,124 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
     );
   }
 
+  getCanRegister(int id) {
+    print(allEvents.length);
+
+    for (var event in allEvents) {
+      print(event.canRegister);
+      if (event.id == id) {
+        return event.canRegister;
+      }
+    }
+  }
+
+  getEventNameFromID(int id) {
+    print(allEvents.length);
+
+    for (var event in allEvents) {
+      if (id == event.id) return event.name;
+    }
+  }
+
+  _registerForEvent(int eventId, context) async {
+    print("tapped");
+    print(eventId);
+
+    Directory tempDir = await getTemporaryDirectory();
+    String tempPath = tempDir.path;
+
+    var cookieJar = PersistCookieJar(
+        dir: tempPath, ignoreExpires: true, persistSession: true);
+
+    dio.interceptors.add(CookieManager(cookieJar));
+    print("efefefef");
+    var response = await dio.post("/createteam", data: {"eventid": eventId});
+
+    print(response.statusCode);
+    print(response.data);
+
+    if (response.statusCode == 200 && response.data['success'] == true) {
+      print("object");
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: new Text("Success!"),
+            content: Text(
+                "You have successfully registered for ${getEventNameFromID(eventId)}. Your team ID is ${response.data['data']}"),
+            actions: <Widget>[
+              new FlatButton(
+                child: new Text("Close"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else if (response.statusCode == 200 &&
+        response.data['msg'] == "User already registered for event") {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: new Text("Oops!"),
+            content: Text(
+                "It seems like you have already registered for ${getEventNameFromID(eventId)}. Check your registered events in the User Section."),
+            actions: <Widget>[
+              new FlatButton(
+                child: new Text("Okay"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else if (response.statusCode == 200 &&
+        response.data['msg'] == "Card for event not bought") {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: new Text("Oops!"),
+            content: Text(
+                "It seems like you have not bought the Delegate Card required for ${getEventNameFromID(eventId)}."),
+            actions: <Widget>[
+              new FlatButton(
+                child: new Text("Close"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: new Text("Oops!"),
+            content: Text(
+                "Whoopsie there seems to be some error. Please check your connecting and try"),
+            actions: <Widget>[
+              new FlatButton(
+                child: new Text(""),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
   _showCategoryScheduleBottomModalSheet(
       BuildContext context, ScheduleData schedule) {
     TabController _controller = TabController(length: 2, vsync: this);
@@ -551,23 +675,70 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
                       style: TextStyle(fontSize: 26.0),
                     ),
                   ),
-                  FlatButton(
-                    onPressed: () {},
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(5.0),
-                      child: Container(
-                        color: Colors.greenAccent.shade400.withOpacity(0.7),
-                        height: MediaQuery.of(context).size.height * 0.055,
-                        width: MediaQuery.of(context).size.width,
-                        alignment: Alignment.center,
-                        child: Text(
-                          "Register Now",
-                          style: TextStyle(
-                            fontSize: 17.0,
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 15.0),
+                    child: getCanRegister(schedule.eventId) == 1
+                        ? Container(
+                            decoration: BoxDecoration(
+                                color: Colors.black,
+                                gradient: LinearGradient(
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                  stops: [0.1, 0.3, 0.7, 0.9],
+                                  colors: [
+                                    Colors.greenAccent.withOpacity(0.9),
+                                    Colors.greenAccent.withOpacity(0.7),
+                                    Colors.teal.withOpacity(0.8),
+                                    Colors.teal.withOpacity(0.6),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(4.0)),
+                            height: MediaQuery.of(context).size.height * 0.055,
+                            width: MediaQuery.of(context).size.width,
+                            alignment: Alignment.center,
+                            child: MaterialButton(
+                              onPressed: () {
+                                !isLoggedIn
+                                    ? showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: new Text("Oops!"),
+                                            content: Text(
+                                                "It seems like you are not logged in, please login first in our user section."),
+                                            actions: <Widget>[
+                                              new FlatButton(
+                                                child: new Text("Close"),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      )
+                                    : _registerForEvent(
+                                        schedule.eventId, context);
+                              },
+                              splashColor: Colors.greenAccent,
+                              child: Container(
+                                width: 300.0,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "Register Now",
+                                  style: TextStyle(
+                                      fontSize: 16.0, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              "Registerations for this event are closed.",
+                              style: TextStyle(color: Colors.redAccent),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
                   ),
                   TabBar(
                     controller: _controller,

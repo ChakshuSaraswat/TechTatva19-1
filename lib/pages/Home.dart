@@ -1,11 +1,17 @@
+import 'dart:math';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:techtatva19/main.dart';
 import 'package:techtatva19/pages/Categories.dart';
+import 'package:techtatva19/pages/DelegateCards.dart';
+import 'package:techtatva19/pages/LiveBlog.dart';
 import 'package:techtatva19/pages/Login.dart';
 import 'package:techtatva19/pages/Results.dart';
 import 'package:techtatva19/pages/Schedule.dart';
+import 'package:techtatva19/HomeImages.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -21,119 +27,222 @@ class _HomeState extends State<Home> {
       body: ListView(
         children: <Widget>[
           Container(
-            margin: EdgeInsets.all(18.0),
             height: 200.0,
-            //color: Colors.red,
-            child: CarouselSlider(
-              autoPlay: true,
-              height: 200.0,
-              viewportFraction: 1.1,
-              autoPlayInterval: Duration(seconds: 3),
-              autoPlayAnimationDuration: Duration(milliseconds: 500),
-              items: <Widget>[
-                Image.asset(
-                  'assets/slider1.png',
-                  fit: BoxFit.contain,
-                ),
-                Image.asset('assets/slider2.png'),
-                Image.asset('assets/slider3.png'),
-                Image.asset('assets/slider4.png'),
+            width: MediaQuery.of(context).size.width,
+            child: Stack(
+              children: <Widget>[
+                Container(
+                    height: 200.0,
+                    width: MediaQuery.of(context).size.width,
+                    child: CachedNetworkImage(
+                      placeholder: (context, url) => Container(
+                        color: Colors.black,
+                      ),
+                      fadeInDuration: Duration(milliseconds: 100),
+                      fadeOutDuration: Duration(milliseconds: 100),
+                      imageUrl: homeImages[Random.secure().nextInt(10)],
+                      fit: BoxFit.cover,
+                    )),
+                Container(
+                    alignment: Alignment.bottomLeft,
+                    padding: EdgeInsets.only(left: 24.0),
+                    height: 200.0,
+                    width: MediaQuery.of(context).size.width,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: [0.5, 0.6, 0.8, 0.9],
+                        colors: [
+                          Colors.black.withOpacity(0.3),
+                          Colors.black.withOpacity(0.5),
+                          Colors.black.withOpacity(0.6),
+                          Colors.black.withOpacity(0.8),
+                        ],
+                      ),
+                    ),
+                    child: Container(
+                      height: 50.0,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            "TechTatva'19",
+                            textAlign: TextAlign.left,
+                            style: TextStyle(fontSize: 24.0),
+                          ),
+                          Text(
+                            "Embracing Contraries",
+                            style: TextStyle(color: Colors.white70),
+                          )
+                        ],
+                      ),
+                    ))
               ],
             ),
           ),
           Container(
-            margin: EdgeInsets.fromLTRB(58.0, 28.0, 58.0, 32.0),
-            color: Colors.greenAccent,
+            margin: EdgeInsets.fromLTRB(55.0, 2.0, 55.0, 18.0),
+            color: Colors.transparent,
             height: 0.5,
           ),
+          _buildHeaderContainer(context, 'Categories', 'Curated just for you',
+              FontAwesomeIcons.shapes, Colors.greenAccent),
+          _buildHeaderContainer(context, 'Live Blog', 'Powered by MIT Post',
+              FontAwesomeIcons.userClock, Colors.pinkAccent),
           _buildHeaderContainer(
-              context, 'Schedule', 'assets/Schedule_crop.jpg'),
+              context,
+              'Delegate Cards',
+              'Various cards for different events',
+              FontAwesomeIcons.creditCard,
+              Colors.deepOrangeAccent),
+          _buildHeaderContainer(context, 'Sponsors', 'Check out our Sponsors!',
+              FontAwesomeIcons.solidHandPeace, Colors.deepPurpleAccent),
           _buildHeaderContainer(
-              context, 'Categories', 'assets/Categories_crop.png'),
-          _buildHeaderContainer(context, 'Results', 'assets/Results_crop.jpg'),
-        ],
-      ),
-    );
-  }
-
-  Container _buildHeaderContainer(
-      BuildContext context, String name, String image) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 18.0, vertical: 12.0),
-      height: 160.0,
-      alignment: Alignment.bottomCenter,
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18.0),
-          image: DecorationImage(
-              colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.75), BlendMode.darken),
-              fit: BoxFit.cover,
-              image: AssetImage(image))),
-      child: Stack(
-        alignment: AlignmentDirectional.bottomStart,
-        children: <Widget>[
+              context,
+              'Developers',
+              'Made by App Dev with Love',
+              FontAwesomeIcons.codeBranch,
+              Colors.lightGreenAccent),
           Container(
-              padding: EdgeInsets.only(left: 10.0),
-              width: MediaQuery.of(context).size.width * 0.86,
-              height: 70.0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  Text(
-                    name,
-                    style: TextStyle(
-                        fontSize: 40.0,
-                        color: Colors.white.withOpacity(0.9),
-                        fontFamily: 'Product-Sans-Regular',
-                        fontStyle: FontStyle.italic,
-                        letterSpacing: 0.01,
-                        fontWeight: FontWeight.w300),
-                    textAlign: TextAlign.left,
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      FontAwesomeIcons.chevronRight,
-                      size: 30.0,
-                      color: Colors.white.withOpacity(1.0),
-                    ),
-                    onPressed: () {},
-                  )
-                ],
-              )),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                if (name == 'Schedule') {
-                  Navigator.of(context).push(
-                      MaterialPageRoute<Null>(builder: (BuildContext context) {
-                    fromHome = true;
-                    return new Schedule();
-                  }));
-                }
-
-                if (name == 'Categories') {
-                  Navigator.of(context).push(
-                      MaterialPageRoute<Null>(builder: (BuildContext context) {
-                    fromHome = true;
-                    return new Categories();
-                  }));
-                }
-
-                if (name == 'Results') {
-                  Navigator.of(context).push(
-                      MaterialPageRoute<Null>(builder: (BuildContext context) {
-                    fromHome = true;
-                    //return new Schedule();
-                    return new Results();
-                  }));
-                }
-              },
-              child: Container(),
+            width: MediaQuery.of(context).size.width,
+            padding: EdgeInsets.all(24.0),
+            child: Text(
+              desc,
+              style: TextStyle(color: Colors.white70, fontSize: 18.0),
+              textAlign: TextAlign.center,
             ),
           ),
+          Container(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text("Made with   "),
+                Icon(
+                  FontAwesomeIcons.solidHeart,
+                  color: Colors.red,
+                )
+              ],
+            ),
+          )
         ],
       ),
     );
   }
+
+  _buildHeaderContainer(context, title, desc, icon, color) {
+    return InkWell(
+      onTap: () {
+        if (title == "Categories")
+          Navigator.of(context)
+              .push(MaterialPageRoute<Null>(builder: (BuildContext context) {
+            return Categories();
+          }));
+        else if (title == "Delegate Cards")
+          Navigator.of(context)
+              .push(MaterialPageRoute<Null>(builder: (BuildContext context) {
+            return DelegateCard();
+          }));
+        else if (title == "Live Blog")
+          Navigator.of(context)
+              .push(MaterialPageRoute<Null>(builder: (BuildContext context) {
+            return LiveBlog();
+          }));
+
+        for (var event in allEvents) {
+          print(event.visible);
+          print(event.name);
+        }
+      },
+      child: Container(
+        margin: EdgeInsets.symmetric(vertical: 2.0, horizontal: 20.0),
+        //    color: Colors.blueAccent,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              height: 80.0,
+              width: 80.0,
+              child: CircleAvatar(
+                backgroundColor: Colors.white12,
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 36.0,
+                ),
+              ),
+            ),
+            Container(
+              alignment: Alignment.center,
+              padding: EdgeInsets.fromLTRB(12.0, 8.0, 0, 0),
+              width: 200.0,
+              height: 100.0,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Container(
+                    padding: EdgeInsets.only(bottom: 6),
+                    width: 190.0,
+                    child: Text(
+                      title,
+                      style: TextStyle(fontSize: 24.0),
+                    ),
+                  ),
+                  Container(
+                    height: 0.5,
+                    width: 400.0,
+                    color: Colors.greenAccent,
+                  ),
+                  Container(
+                    padding: EdgeInsets.fromLTRB(0, 6.0, 0, 2.0),
+                    alignment: Alignment.topLeft,
+                    height: 50.0,
+                    width: 190.0,
+                    child: Text(
+                      desc,
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  )
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Container _buildHeaderContainer(
+  //     BuildContext context, String name, String image) {
+  //   return Container(
+  //     margin: EdgeInsets.symmetric(horizontal: 14.0),
+  //     child: Row(
+  //       children: <Widget>[
+  //         Container(
+  //           margin: EdgeInsets.only(left: 18.0),
+  //           height: 100.0,
+  //           width: 100.0,
+  //           color: Colors.red,
+  //           child: Image.asset('/assets/Categories.png'),
+  //           //child: Image.asset(image),
+  //         ),
+  //         Container(
+  //           height: 100.0,
+  //           width: 200.0,
+  //           alignment: Alignment.bottomCenter,
+  //           decoration: BoxDecoration(
+  //             color: Colors.blue,
+  //             borderRadius: BorderRadius.circular(18.0),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  String desc =
+      "The world is characterized by diversity – the golden sands of the Sahara are as captivating as the Amazon’s emerald canopies and Antarctica’s pearly stillnesss. These diverging hues are what make the world tick, and we hope to embody this variegation at Techtatva’19 – Embracing Contraries. Techtatva is a national level technical fest of Manipal Institute of Technology which aims at going beyond circulated PDFs and pictures of notebooks, instead bringing learning to one’s fingertips. We strive to bring out the best in coders, designers, innovators and automobile enthusiasts alike, across their diverse fields and talents. Humans have come so far because of their ability to hone each talent and direct it towards a united cause. A day spent perspirating at a workshop while fiddling with tools and components could not be more different from a day spent squinting at a screen with your mind in tangles, but both are quintessential for technology itself to progress. Each one of us is unique and in this edition of Techtatva, from the 9th to the 12th of October, we strive to embrace our peculiarities and stand as one, and we invite you to stand with us.";
 }
