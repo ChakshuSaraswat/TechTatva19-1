@@ -36,24 +36,10 @@ class _ResultsState extends State<Results> with TickerProviderStateMixin {
     return eventsWithResults;
   }
 
-  // _doThis() async {
-  //   print("eeee");
-  //   Dio dio = new Dio();
-  //   var resp = await dio.get("/userProfile");
-  //   print(resp);
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: Colors.black,
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.greenAccent,
-          child: Icon(
-            Icons.search,
-            color: Colors.black,
-          ),
-        ),
         body: NestedScrollView(
           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
             return <Widget>[
@@ -71,15 +57,25 @@ class _ResultsState extends State<Results> with TickerProviderStateMixin {
                   child: CircularProgressIndicator(),
                 );
               else {
-                return Container(
-                  padding: EdgeInsets.only(top: 5.0),
-                  child: GridView.count(
-                    crossAxisCount: 3,
-                    children: List.generate(eventsWithResults.length, (index) {
-                      return _buildResultCard(context, index);
-                    }),
-                  ),
-                );
+                return eventsWithResults.length != 0
+                    ? Container(
+                        padding: EdgeInsets.only(top: 5.0),
+                        child: GridView.count(
+                          crossAxisCount: 3,
+                          children:
+                              List.generate(eventsWithResults.length, (index) {
+                            return _buildResultCard(context, index);
+                          }),
+                        ),
+                      )
+                    : Container(
+                        alignment: Alignment.center,
+                        height: MediaQuery.of(context).size.height,
+                        width: MediaQuery.of(context).size.width,
+                        child: Text("No Results available.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white70)),
+                      );
               }
             },
           ),
@@ -195,6 +191,7 @@ class _ResultsState extends State<Results> with TickerProviderStateMixin {
                     eventsWithResults[index].name,
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 26.0),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 TabBar(

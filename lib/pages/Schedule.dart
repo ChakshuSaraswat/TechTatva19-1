@@ -13,6 +13,11 @@ import 'dart:async';
 import 'package:techtatva19/pages/Login.dart';
 import 'package:techtatva19/models/ScheduleModel.dart';
 import 'package:techtatva19/models/CategoryModel.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:intent/intent.dart' as inten;
+import 'package:intent/action.dart' as act;
+import 'package:intent/extra.dart';
+import 'package:intent/category.dart';
 
 class Schedule extends StatefulWidget {
   @override
@@ -23,58 +28,73 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
   bool isFABTapped = false;
 
   SharedPreferences _preferences;
-  _buildFAB() {
-    return FloatingActionButton(
-      backgroundColor: Colors.greenAccent,
-      child: Icon(
-        Icons.search,
-        color: Colors.black,
-      ),
-      onPressed: () {},
-    );
+
+  _launchURL(url) async {
+    if (await canLaunch(url)) {
+      await launch("url");
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      floatingActionButton: _buildFAB(),
-      body: DefaultTabController(
-        length: 4,
-        child: NestedScrollView(
-            headerSliverBuilder:
-                (BuildContext context, bool innerBoxIsScrolled) {
-              return <Widget>[
-                SliverAppBarDelegate.buildSliverAppBar(
-                    "Schedule", "assets/Schedule.jpg"),
-                SliverPersistentHeader(
-                  delegate: SliverAppBarDelegate(
-                    TabBar(
-                      tabs: [
-                        _buildTab("Day 1", "09-10-2019"),
-                        _buildTab("Day 2", "10-10-2019"),
-                        _buildTab("Day 3", "11-10-2019"),
-                        _buildTab("Day 4", "12-10-2019"),
-                      ],
+    try {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: DefaultTabController(
+          length: 4,
+          child: NestedScrollView(
+              headerSliverBuilder:
+                  (BuildContext context, bool innerBoxIsScrolled) {
+                return <Widget>[
+                  SliverAppBarDelegate.buildSliverAppBar(
+                      "Schedule", "assets/Schedule.jpg"),
+                  SliverPersistentHeader(
+                    delegate: SliverAppBarDelegate(
+                      TabBar(
+                        tabs: [
+                          _buildTab("Day 1", "09-10-2019"),
+                          _buildTab("Day 2", "10-10-2019"),
+                          _buildTab("Day 3", "11-10-2019"),
+                          _buildTab("Day 4", "12-10-2019"),
+                        ],
+                      ),
                     ),
+                    pinned: true,
                   ),
-                  pinned: true,
+                ];
+              },
+              body: Container(
+                padding: const EdgeInsets.all(8.0),
+                child: TabBarView(
+                  children: <Widget>[
+                    _buildCard(
+                        scheduleForDay(allSchedule, 'Wednesday'), context),
+                    _buildCard(
+                        scheduleForDay(allSchedule, 'Thursday'), context),
+                    _buildCard(scheduleForDay(allSchedule, 'Friday'), context),
+                    _buildCard(
+                        scheduleForDay(allSchedule, 'Saturday'), context),
+                  ],
                 ),
-              ];
-            },
-            body: Container(
-              padding: const EdgeInsets.all(8.0),
-              child: TabBarView(
-                children: <Widget>[
-                  _buildCard(scheduleForDay(allSchedule, 'Wednesday'), context),
-                  _buildCard(scheduleForDay(allSchedule, 'Thursday'), context),
-                  _buildCard(scheduleForDay(allSchedule, 'Friday'), context),
-                  _buildCard(scheduleForDay(allSchedule, 'Saturday'), context),
-                ],
-              ),
-            )),
-      ),
-    );
+              )),
+        ),
+      );
+    } catch (e) {
+      return Scaffold(
+        body: Container(
+          height: MediaQuery.of(context).size.height,
+          width: MediaQuery.of(context).size.width,
+          alignment: Alignment.center,
+          child: Text(
+            "There appears to be some error, don't panic. Just toggle between tabs or restart the app.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white70),
+          ),
+        ),
+      );
+    }
   }
 
   Widget _buildTab(String day, String date) => Tab(
@@ -119,7 +139,6 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
         dir: tempPath, ignoreExpires: true, persistSession: true);
 
     dio.interceptors.add(CookieManager(cookieJar));
-    print("efefefef");
     var response = await dio.post("/createteam", data: {"eventid": eventId});
 
     print(response.statusCode);
@@ -216,7 +235,6 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
   }
 
   getCanRegister(int id) {
-
     print(allEvents.length);
 
     for (var event in allEvents) {
@@ -386,11 +404,11 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
                             _buildEventListTileInfo(
                                 null,
                                 "${scheduleCategory.cc1Name}",
-                                "+91${scheduleCategory.cc1Contact}"),
+                                "${scheduleCategory.cc1Contact}"),
                             _buildEventListTileInfo(
                                 null,
                                 "${scheduleCategory.cc2Name}",
-                                "+91${scheduleCategory.cc2Contact}")
+                                "${scheduleCategory.cc2Contact}")
                           ],
                         ),
                         Container(
@@ -422,7 +440,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
   getTeamSize(ScheduleData scheduleData) {
     for (var i in allEvents) {
       if (i.id == scheduleData.eventId) {
-        print("MATCHED");
+
         return (i.maxTeamSize == i.minTeamSize)
             ? i.maxTeamSize.toString()
             : '${i.minTeamSize} - ${i.maxTeamSize}';
@@ -434,22 +452,30 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
     return Material(
       color: Colors.black,
       child: ListTile(
-        onTap: () {},
+        onTap: () {
+          if (icon == null) {
+
+            inten.Intent()
+              ..setAction(act.Action.ACTION_VIEW)
+              ..setData(Uri(scheme: "tel", path: value))
+              ..startActivity().catchError((e) => print(e));
+          }
+        },
         leading: icon,
         title: Container(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text(
-                title,
+                title == "null" ? "unavailable" : title,
                 style: TextStyle(
                   fontWeight: FontWeight.w100,
                 ),
               ),
               Container(
-                width: 180.0,
+                width: 140.0,
                 child: Text(
-                  value,
+                  value == "null" ? "unavailable" : value,
                   textAlign: TextAlign.end,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -484,7 +510,7 @@ class _ScheduleState extends State<Schedule> with TickerProviderStateMixin {
             itemCount: allSchedule.length,
             itemBuilder: (BuildContext context, int index) {
               if (getVisibleFrom(allSchedule[index].eventId) == 0) {
-                print("NOPEEE");
+
                 return null;
               }
 

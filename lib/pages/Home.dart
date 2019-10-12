@@ -12,6 +12,10 @@ import 'package:techtatva19/pages/Login.dart';
 import 'package:techtatva19/pages/Results.dart';
 import 'package:techtatva19/pages/Schedule.dart';
 import 'package:techtatva19/HomeImages.dart';
+import 'package:techtatva19/pages/Sponsors.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'Developers.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -32,17 +36,23 @@ class _HomeState extends State<Home> {
             child: Stack(
               children: <Widget>[
                 Container(
-                    height: 200.0,
-                    width: MediaQuery.of(context).size.width,
-                    child: CachedNetworkImage(
-                      placeholder: (context, url) => Container(
-                        color: Colors.black,
+                  height: 200.0,
+                  width: MediaQuery.of(context).size.width,
+                  child: CachedNetworkImage(
+                    placeholder: (context, url) => Container(
+                      height: 200.0,
+                      width: MediaQuery.of(context).size.width,
+                      alignment: Alignment.center,
+                      child: Container(
+                        child: Image.asset("assets/ttlogo.png"),
                       ),
-                      fadeInDuration: Duration(milliseconds: 100),
-                      fadeOutDuration: Duration(milliseconds: 100),
-                      imageUrl: homeImages[Random.secure().nextInt(10)],
-                      fit: BoxFit.cover,
-                    )),
+                    ),
+                    fadeInDuration: Duration(milliseconds: 100),
+                    fadeOutDuration: Duration(milliseconds: 100),
+                    imageUrl: homeImages[Random.secure().nextInt(10)],
+                    fit: BoxFit.cover,
+                  ),
+                ),
                 Container(
                     alignment: Alignment.bottomLeft,
                     padding: EdgeInsets.only(left: 24.0),
@@ -53,11 +63,11 @@ class _HomeState extends State<Home> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        stops: [0.5, 0.6, 0.8, 0.9],
+                        stops: [0.1, 0.3, 0.7, 0.9],
                         colors: [
-                          Colors.black.withOpacity(0.3),
+                          Colors.black.withOpacity(0),
+                          Colors.black.withOpacity(0),
                           Colors.black.withOpacity(0.5),
-                          Colors.black.withOpacity(0.6),
                           Colors.black.withOpacity(0.8),
                         ],
                       ),
@@ -98,14 +108,58 @@ class _HomeState extends State<Home> {
               'Various cards for different events',
               FontAwesomeIcons.creditCard,
               Colors.deepOrangeAccent),
-          _buildHeaderContainer(context, 'Sponsors', 'Check out our Sponsors!',
-              FontAwesomeIcons.solidHandPeace, Colors.deepPurpleAccent),
+          _buildHeaderContainer(context, 'Sponsors', 'Our Proud Partners',
+              FontAwesomeIcons.handsHelping, Colors.blueAccent),
           _buildHeaderContainer(
               context,
               'Developers',
-              'Made by App Dev with Love',
+              'Made with Love by App Dev',
               FontAwesomeIcons.codeBranch,
               Colors.lightGreenAccent),
+          Container(
+            padding: EdgeInsets.all(24.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(
+                    FontAwesomeIcons.facebook,
+                    color: Color.fromRGBO(59, 89, 152, 1),
+                    size: 32.0,
+                  ),
+                  onPressed: () {
+                    _launchURL("https://www.facebook.com/MITtechtatva/");
+                  },
+                ),
+                IconButton(
+                  icon: Icon(FontAwesomeIcons.twitter,
+                      color: Color.fromRGBO(29, 161, 242, 1), size: 32.0),
+                  onPressed: () {
+                    _launchURL("https://twitter.com/mittechtatva");
+                  },
+                ),
+                IconButton(
+                  icon: Icon(FontAwesomeIcons.instagram,
+                      color: Colors.pinkAccent, size: 32.0),
+                  onPressed: () {
+                    _launchURL("https://www.instagram.com/mittechtatva/");
+                  },
+                ),
+                IconButton(
+                  icon: Icon(FontAwesomeIcons.youtube,
+                      color: Color.fromRGBO(196, 48, 43, 1), size: 32.0),
+                  onPressed: () {
+                    _launchURL("https://www.youtube.com/user/TechTatva");
+                  },
+                ),
+              ],
+            ),
+          ),
+          Container(
+            margin: EdgeInsets.fromLTRB(30.0, 8.0, 30.0, 8.0),
+            color: Colors.greenAccent,
+            height: 0.5,
+          ),
           Container(
             width: MediaQuery.of(context).size.width,
             padding: EdgeInsets.all(24.0),
@@ -116,13 +170,27 @@ class _HomeState extends State<Home> {
             ),
           ),
           Container(
+              width: MediaQuery.of(context).size.width,
+              padding: EdgeInsets.fromLTRB(150, 20, 150, 30),
+              alignment: Alignment.center,
+              child: Image.asset("assets/logo_NEW_NEW.png")),
+          Container(
+            padding: EdgeInsets.all(12.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Text("Made with   "),
+                Text(
+                  "Developed with  ",
+                  style: TextStyle(color: Colors.white70),
+                ),
                 Icon(
                   FontAwesomeIcons.solidHeart,
-                  color: Colors.red,
+                  color: Color.fromRGBO(Random.secure().nextInt(255), Random.secure().nextInt(255), Random.secure().nextInt(255), 1),
+                  size: 12.0,
+                ),
+                Text(
+                  "  by the App Dev Team",
+                  style: TextStyle(color: Colors.white70),
                 )
               ],
             ),
@@ -149,6 +217,16 @@ class _HomeState extends State<Home> {
           Navigator.of(context)
               .push(MaterialPageRoute<Null>(builder: (BuildContext context) {
             return LiveBlog();
+          }));
+        else if (title == "Developers")
+          Navigator.of(context)
+              .push(MaterialPageRoute<Null>(builder: (BuildContext context) {
+            return Developers();
+          }));
+        else if (title == "Sponsors")
+          Navigator.of(context)
+              .push(MaterialPageRoute<Null>(builder: (BuildContext context) {
+            return Sponsors();
           }));
 
         for (var event in allEvents) {
@@ -205,7 +283,7 @@ class _HomeState extends State<Home> {
                       desc,
                       style: TextStyle(color: Colors.white70),
                     ),
-                  )
+                  ),
                 ],
               ),
             )
@@ -213,6 +291,14 @@ class _HomeState extends State<Home> {
         ),
       ),
     );
+  }
+
+  _launchURL(url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   // Container _buildHeaderContainer(
@@ -244,5 +330,5 @@ class _HomeState extends State<Home> {
   // }
 
   String desc =
-      "The world is characterized by diversity – the golden sands of the Sahara are as captivating as the Amazon’s emerald canopies and Antarctica’s pearly stillnesss. These diverging hues are what make the world tick, and we hope to embody this variegation at Techtatva’19 – Embracing Contraries. Techtatva is a national level technical fest of Manipal Institute of Technology which aims at going beyond circulated PDFs and pictures of notebooks, instead bringing learning to one’s fingertips. We strive to bring out the best in coders, designers, innovators and automobile enthusiasts alike, across their diverse fields and talents. Humans have come so far because of their ability to hone each talent and direct it towards a united cause. A day spent perspirating at a workshop while fiddling with tools and components could not be more different from a day spent squinting at a screen with your mind in tangles, but both are quintessential for technology itself to progress. Each one of us is unique and in this edition of Techtatva, from the 9th to the 12th of October, we strive to embrace our peculiarities and stand as one, and we invite you to stand with us.";
+      "The world is characterized by diversity – the golden sands of the Sahara are as captivating as the Amazon’s emerald canopies and Antarctica’s pearly stillnesss. These diverging hues are what make the world tick, and we hope to embody this variegation at Techtatva’19 – Embracing Contraries.\n\nTechtatva is a national level technical fest of Manipal Institute of Technology which aims at going beyond circulated PDFs and pictures of notebooks, instead bringing learning to one’s fingertips. We strive to bring out the best in coders, designers, innovators and automobile enthusiasts alike, across their diverse fields and talents.\n\nHumans have come so far because of their ability to hone each talent and direct it towards a united cause.\n\nA day spent perspirating at a workshop while fiddling with tools and components could not be more different from a day spent squinting at a screen with your mind in tangles, but both are quintessential for technology itself to progress.\n\nEach one of us is unique and in this edition of Techtatva, from the 9th to the 12th of October, we strive to embrace our peculiarities and stand as one, and we invite you to stand with us.";
 }

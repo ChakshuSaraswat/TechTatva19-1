@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 class LiveBlog extends StatefulWidget {
   @override
@@ -12,6 +14,14 @@ class LiveBlog extends StatefulWidget {
 class _LiveBlogState extends State<LiveBlog> {
   List<LiveBlogModel> liveBlog = [];
 
+  // _launchURL(url) async {
+  //   if (await canLaunch(url)) {
+  //     await launch(url);
+  //   } else {
+  //     throw 'Could not launch $url';
+  //   }
+  // }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,6 +29,15 @@ class _LiveBlogState extends State<LiveBlog> {
         centerTitle: true,
         title: Text("Live Blog"),
         backgroundColor: Colors.black,
+        // actions: <Widget>[
+        //   IconButton(
+        //     onPressed: () {},
+        //     icon: Icon(
+        //       Icons.web,
+        //       color: Colors.white,
+        //     ),
+        //   )
+        // ],
       ),
       body: FutureBuilder(
         future: loadBlog(),
@@ -40,7 +59,6 @@ class _LiveBlogState extends State<LiveBlog> {
               child: ListView.builder(
                 itemCount: liveBlog.length,
                 itemBuilder: (context, index) {
-                  print("ONLU");
                   return Container(
                     width: MediaQuery.of(context).size.width,
                     margin: EdgeInsets.all(12.0),

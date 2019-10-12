@@ -235,13 +235,17 @@ class RegisteredEventsState extends State<RegisteredEvents> {
   }
 
   Future _scanQR(context, evendId) async {
-    var result;
+    var res;
 
     try {
       String qrResult = await BarcodeScanner.scan();
       setState(() {
-        result = qrResult;
+        res = qrResult.replaceAll(" ", "+");
       });
+
+      String result = res.toString();
+      
+      //result.replaceAll(" ","+");
 
       Directory tempDir = await getTemporaryDirectory();
       String tempPath = tempDir.path;
@@ -257,20 +261,25 @@ class RegisteredEventsState extends State<RegisteredEvents> {
       String msg;
 
       if (resp.statusCode == 200 && resp.data['success'] == true) {
-        print("SCAN HO GAYA BHAIII");
         msg = "You have successfully added a member to your team";
       }
 
-      if (resp.data['msg'] == "Card for event not bought") {
+      else if (resp.data['msg'] == "Card for event not bought") {
         msg =
             "This user has not bought the card required for this particular event";
       }
 
-      if (resp.data['msg'] == "User already registered for event") {
+      else if (resp.data['msg'] == "User already registered for event") {
         msg = "This user has already registered for this particular event";
       }
 
+      else{
+        msg = resp.data['msg'];
+      }
+
       print(resp.data);
+
+      print(result);
 
       showDialog(
         context: context,
@@ -293,18 +302,18 @@ class RegisteredEventsState extends State<RegisteredEvents> {
     } on PlatformException catch (ex) {
       if (ex.code == BarcodeScanner.CameraAccessDenied) {
         setState(() {
-          result = "Camera permission was denied";
+          res = "Camera permission was denied";
         });
       } else {
         setState(() {
-          result = "Unknown Error $ex";
+          res = "Unknown Error $ex";
         });
       }
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: new Text(result),
+            title: new Text(res),
             actions: <Widget>[
               new FlatButton(
                 child: new Text("Close"),
@@ -319,17 +328,17 @@ class RegisteredEventsState extends State<RegisteredEvents> {
       );
     } on FormatException {
       setState(() {
-        result = "You pressed the back button before scanning anything";
+        res = "You pressed the back button before scanning anything";
       });
     } catch (ex) {
       setState(() {
-        result = "Unknown Error $ex";
+        res = "Unknown Error $ex";
       });
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: new Text(result),
+            title: new Text(res),
             actions: <Widget>[
               new FlatButton(
                 child: new Text("Close"),
@@ -429,7 +438,6 @@ class RegisteredEventsState extends State<RegisteredEvents> {
 
   loadRegisteredEvents() async {
     allRegisteredEvents = await _fetchRegisteredEvents();
-    print(allRegisteredEvents.length);
     return "success";
   }
 
@@ -448,7 +456,6 @@ class RegisteredEventsState extends State<RegisteredEvents> {
       var resp = await dio.get("/registeredevents");
 
       if (resp.statusCode == 200) {
-        print("GOT THEM REG EVEN");
 
         if (resp.data['success'] == true) {
           for (var json in resp.data['data']) {
@@ -463,9 +470,7 @@ class RegisteredEventsState extends State<RegisteredEvents> {
                 teamId: teamId, eventId: eventId, round: round, delId: delId);
 
             registeredEvents.add(temp);
-            print(temp.teamId);
           }
-          print("ALL SEUCCEE IS TUE");
         }
       }
     } catch (e) {

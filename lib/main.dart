@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,10 +40,10 @@ _startUserCache() async {
 
         if (resp.statusCode == 200) {
           print(resp.data);
-          print("SUCCESS AF");
+      
         }
       } catch (e) {
-        print("EDED$e");
+    
       }
     }
 
@@ -68,6 +69,10 @@ _startUserCache() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     return MaterialApp(
       showPerformanceOverlay: false,
       debugShowCheckedModeBanner: false,
@@ -135,7 +140,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if (response.statusCode == 200)
         preferences.setString('DelegateCards', json.encode(response.body));
     } catch (e) {
-      print("problem with del carsd");
+      print("problem with del cards");
       print(e);
     }
   }
@@ -161,7 +166,6 @@ class _MyHomePageState extends State<MyHomePage> {
         preferences.setString('Categories', json.encode(response.body));
     } catch (e) {
       print(e);
-      print("CAT ERRP");
     }
   }
 
@@ -181,7 +185,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _cacheResults() async {
     try {
       final response =
-          await http.get(Uri.encodeFull("https://api.mitrevels.in/results"));
+          await http.get(Uri.encodeFull("https://api.techtatva.in/results"));
       if (response.statusCode == 200)
         preferences.setString('Results', json.encode(response.body));
       if (response == null) return;
@@ -386,7 +390,6 @@ _fetchEvents() async {
 Future<String> loadEvents() async {
   allEvents = await _fetchEvents();
   //print(allEvents.length);
-  print("WE GOT events");
   return "success";
 }
 
@@ -426,7 +429,6 @@ _fetchCards() async {
       }
     } else {
       print(data);
-      print("CACHEDDDDthisisD");
       print(jsonDecode(jsonDecode(data)));
       jsonData = jsonDecode(jsonDecode(data));
     }
@@ -452,9 +454,7 @@ _fetchCards() async {
 
         cards.add(temp);
 
-        print("gotEm");
       } catch (e) {
-        print("CANT DO IT");
         print(e);
       }
     }
@@ -466,7 +466,6 @@ _fetchCards() async {
 
 Future<String> loadResults() async {
   allResults = await _fetchResults();
-  print("GOT THEM RESULTS BOI");
   return "success";
 }
 
@@ -498,7 +497,7 @@ _fetchResults() async {
       jsonData = jsonDecode(jsonDecode(data));
     } else {
       final response =
-          await http.get(Uri.encodeFull("https://api.mitrevels.in/results"));
+          await http.get(Uri.encodeFull("https://api.techtatva.in/results"));
 
       if (response.statusCode == 200) jsonData = json.decode(response.body);
     }
@@ -611,7 +610,6 @@ Future<String> loadCategories() async {
     });
   } catch (e) {
     print(e);
-    print("lol ho gaya");
     return "success";
   }
   //print('${allCategories.length}');
@@ -649,7 +647,6 @@ _fetchSchedule() async {
       }
     } else {
       print(data);
-      print("CACHEDDDDthisisD");
       print(jsonDecode(jsonDecode(data)));
       jsonData = jsonDecode(jsonDecode(data));
     }
@@ -677,9 +674,8 @@ _fetchSchedule() async {
         );
 
         schedule.add(temp);
-        print("gotEm");
       } catch (e) {
-        print("CANT DO IT");
+
         print(e);
       }
     }

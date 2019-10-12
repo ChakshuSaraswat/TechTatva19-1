@@ -4,12 +4,14 @@ import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techtatva19/main.dart';
 import 'dart:convert';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:techtatva19/models/UserModel.dart';
 import 'package:techtatva19/pages/RegisteredEvents.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 UserData user;
 
@@ -176,7 +178,9 @@ class _LoginPageState extends State<LoginPage> {
                       width: MediaQuery.of(context).size.width,
                       alignment: Alignment.center,
                       child: MaterialButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          _launchURL("https://register.techtatva.in/");
+                        },
                         splashColor: Colors.greenAccent,
                         child: Container(
                           width: 300.0,
@@ -206,141 +210,168 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  _launchURL(url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
   _userPage(context) {
-    return Scaffold(
-      body: Container(
-        padding: EdgeInsets.all(6.0),
-        color: Colors.black,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Container(
-              padding: EdgeInsets.all(10.0),
-              margin: EdgeInsets.only(left: 16.0),
-              child: Text(
-                user.name,
-                style: TextStyle(
+    try {
+      print(user.qrCode);
+      return Scaffold(
+        body: Container(
+          padding: EdgeInsets.all(6.0),
+          color: Colors.black,
+          child: ListView(
+            children: <Widget>[
+              Container(
+                padding: EdgeInsets.all(10.0),
+                margin: EdgeInsets.only(left: 16.0),
+                child: Text(
+                  user.name,
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 32.0,
+                      fontWeight: FontWeight.w100),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+              Container(
+                color: Colors.greenAccent,
+                height: 0.5,
+                margin: EdgeInsets.symmetric(horizontal: 24.0),
+                width: MediaQuery.of(context).size.width * 0.9,
+              ),
+              Container(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: <Widget>[
+                    _buildUserTile(context, "Delegate ID", user.id.toString()),
+                    _buildUserTile(context, "Registration No.", user.regNo),
+                    _buildUserTile(context, "College", user.collegeName),
+                    _buildUserTile(context, "Phone", user.mobilNumber),
+                    _buildUserTile(context, "Email ID", user.emailId),
+                  ],
+                ),
+              ),
+              Container(
+                color: Colors.greenAccent,
+                height: 0.5,
+                margin: EdgeInsets.symmetric(horizontal: 24.0),
+                width: MediaQuery.of(context).size.width * 0.9,
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(64, 18, 64, 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 12.0),
                     color: Colors.white,
-                    fontSize: 32.0,
-                    fontWeight: FontWeight.w100),
-                textAlign: TextAlign.left,
-              ),
-            ),
-            Container(
-              color: Colors.greenAccent,
-              height: 0.5,
-              margin: EdgeInsets.symmetric(horizontal: 24.0),
-              width: MediaQuery.of(context).size.width * 0.9,
-            ),
-            Container(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: <Widget>[
-                  _buildUserTile(context, "Delegate ID", user.id.toString()),
-                  _buildUserTile(context, "Registration No.", user.regNo),
-                  _buildUserTile(context, "College", user.collegeName),
-                  _buildUserTile(context, "Phone", user.mobilNumber),
-                  _buildUserTile(context, "Email ID", user.emailId),
-                ],
-              ),
-            ),
-            Container(
-              color: Colors.greenAccent,
-              height: 0.5,
-              margin: EdgeInsets.symmetric(horizontal: 24.0),
-              width: MediaQuery.of(context).size.width * 0.9,
-            ),
-            Container(
-                margin: EdgeInsets.symmetric(vertical: 16.0),
-                child: FutureBuilder(
-                    future: _getQRCode(context),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return Container(
-                          height: 170.0,
-                          width: 170.0,
-                        );
-                      }
-                      return snapshot.data;
-                    })),
-            Container(
-              margin: EdgeInsets.fromLTRB(50.0, 10, 50.0, 6.0),
-              child: Container(
-                decoration: BoxDecoration(
-                    color: Colors.black,
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      stops: [0.1, 0.3, 0.7, 0.9],
-                      colors: [
-                        Colors.blue.withOpacity(0.9),
-                        Colors.blue.withOpacity(0.9),
-                        Colors.blueAccent.withOpacity(0.9),
-                        Colors.blueAccent.withOpacity(0.9),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(25.0)),
-                height: MediaQuery.of(context).size.height * 0.05,
-                width: MediaQuery.of(context).size.width,
-                alignment: Alignment.center,
-                child: MaterialButton(
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute<Null>(
-                        builder: (BuildContext context) {
-                      return new RegisteredEvents();
-                    }));
-                  },
-                  child: Container(
-                    width: 300.0,
-                    alignment: Alignment.center,
-                    child: Text(
-                      "Event Registration",
-                      style: TextStyle(fontSize: 16.0, color: Colors.white),
+                    child: Center(
+                      child: RepaintBoundary(
+                        child: QrImage(
+                          data: user.qrCode,
+                          size: MediaQuery.of(context).size.height * 0.27,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            Container(
-              margin: EdgeInsets.fromLTRB(50.0, 10, 50.0, 0),
-              child: Container(
-                decoration: BoxDecoration(
-                    color: Colors.black,
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      stops: [0.1, 0.3, 0.7, 0.9],
-                      colors: [
-                        Colors.red.withOpacity(0.8),
-                        Colors.red.withOpacity(0.8),
-                        Colors.redAccent.withOpacity(1),
-                        Colors.redAccent.withOpacity(1),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(25.0)),
-                height: MediaQuery.of(context).size.height * 0.05,
-                width: MediaQuery.of(context).size.width,
-                alignment: Alignment.center,
-                child: MaterialButton(
-                  onPressed: () {
-                    _logoutRequest();
-                  },
-                  child: Container(
-                    width: 300.0,
-                    alignment: Alignment.center,
-                    child: Text(
-                      "Logout",
-                      style: TextStyle(fontSize: 16.0, color: Colors.white),
+              Container(
+                margin: EdgeInsets.fromLTRB(50.0, 10, 50.0, 6.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                      color: Colors.black,
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        stops: [0.1, 0.3, 0.7, 0.9],
+                        colors: [
+                          Colors.blue.withOpacity(0.9),
+                          Colors.blue.withOpacity(0.9),
+                          Colors.blueAccent.withOpacity(0.9),
+                          Colors.blueAccent.withOpacity(0.9),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(25.0)),
+                  height: MediaQuery.of(context).size.height * 0.05,
+                  width: MediaQuery.of(context).size.width,
+                  alignment: Alignment.center,
+                  child: MaterialButton(
+                    onPressed: () {
+                      Navigator.of(context).push(MaterialPageRoute<Null>(
+                          builder: (BuildContext context) {
+                        return new RegisteredEvents();
+                      }));
+                    },
+                    child: Container(
+                      width: 300.0,
+                      alignment: Alignment.center,
+                      child: Text(
+                        "Event Registration",
+                        style: TextStyle(fontSize: 16.0, color: Colors.white),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+              Container(
+                margin: EdgeInsets.fromLTRB(50.0, 10, 50.0, 0),
+                child: Container(
+                  decoration: BoxDecoration(
+                      color: Colors.black,
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        stops: [0.1, 0.3, 0.7, 0.9],
+                        colors: [
+                          Colors.red.withOpacity(0.8),
+                          Colors.red.withOpacity(0.8),
+                          Colors.redAccent.withOpacity(1),
+                          Colors.redAccent.withOpacity(1),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(25.0)),
+                  height: MediaQuery.of(context).size.height * 0.05,
+                  width: MediaQuery.of(context).size.width,
+                  alignment: Alignment.center,
+                  child: MaterialButton(
+                    onPressed: () {
+                      _logoutRequest();
+                    },
+                    child: Container(
+                      width: 300.0,
+                      alignment: Alignment.center,
+                      child: Text(
+                        "Logout",
+                        style: TextStyle(fontSize: 16.0, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      return Scaffold(
+        body: Container(
+          height: MediaQuery.of(context).size.height,
+          width: MediaQuery.of(context).size.width,
+          alignment: Alignment.center,
+          child: Text(
+            "There appears to be some error, don't panic. Just toggle between tabs or restart the app.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white70),
+          ),
+        ),
+      );
+    }
   }
 
   _getQRCode(context) async {
@@ -375,8 +406,6 @@ class _LoginPageState extends State<LoginPage> {
     var resp = await dio.get("/logout");
 
     if (resp.statusCode == 200) {
-      print("NO");
-      print("LOgged Out");
       isLoggedIn = false;
       preferences = await SharedPreferences.getInstance();
       preferences.setBool('isLoggedIn', false);

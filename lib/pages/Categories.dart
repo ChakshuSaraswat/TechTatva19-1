@@ -7,14 +7,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techtatva19/models/CategoryModel.dart';
 import 'package:techtatva19/models/ScheduleModel.dart';
-import 'package:http/http.dart' as http;
-import 'package:techtatva19/pages/Schedule.dart';
-import 'dart:async';
+import 'package:url_launcher/url_launcher.dart';
 import 'Login.dart';
-import 'Schedule.dart';
-import 'dart:convert';
 import 'package:flare_flutter/flare_actor.dart';
 import '../main.dart';
+import 'package:intent/intent.dart' as inten;
+import 'package:intent/action.dart' as act;
 
 class Categories extends StatefulWidget {
   @override
@@ -29,77 +27,11 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
 
   bool isTapped = true;
 
-  _buildFloatingActionButton() {
-    return InkWell(
-      child: AnimatedContainer(
-          duration: Duration(milliseconds: 500),
-          curve: Curves.fastLinearToSlowEaseIn,
-          height: isTapped ? 56.0 : 40.0,
-          width: isTapped
-              ? 56
-              : MediaQuery.of(_scaffoldKey.currentContext).size.width * 0.7,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-              color: Colors.greenAccent,
-              borderRadius: BorderRadius.circular(100.0)),
-          child: isTapped
-              ? IconButton(
-                  icon: Icon(Icons.search, color: Colors.black),
-                  onPressed: () {
-                    setState(() {
-                      isTapped = !isTapped;
-                    });
-                  },
-                )
-              : Container(
-                  child: Row(
-                    children: <Widget>[
-                      IconButton(
-                        icon: Icon(
-                          Icons.search,
-                          color: Colors.black,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            isTapped = !isTapped;
-                          });
-                        },
-                      ),
-                      Container(
-                        width: !isTapped
-                            ? MediaQuery.of(context).size.width * 0.5
-                            : 10.0,
-                        alignment: Alignment.center,
-                        child: ClipRect(
-                          clipBehavior: Clip.antiAliasWithSaveLayer,
-                          child: TextField(
-                            decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintText: "search here...",
-                                hintStyle: TextStyle(
-                                    color: Colors.black.withOpacity(0.5))),
-                            onSubmitted: (str) {
-                              setState(() {
-                                isTapped = !isTapped;
-                              });
-                            },
-                            //   autofocus: true,
-                            style: TextStyle(color: Colors.black),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                )),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         key: _scaffoldKey,
         backgroundColor: Colors.black,
-        floatingActionButton: _buildFloatingActionButton(),
         body: NestedScrollView(
           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
             return <Widget>[
@@ -108,7 +40,7 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
             ];
           },
           body: Container(
-            padding: EdgeInsets.only(top: 10.0),
+            padding: EdgeInsets.only(top: 0.0),
             child: ListView.builder(
               itemCount: allCategories.length,
               itemBuilder: (BuildContext context, int index) {
@@ -118,6 +50,14 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
             ),
           ),
         ));
+  }
+
+  _launchURL(url) async {
+    if (await canLaunch(url)) {
+      await launch("url");
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   _showBottomModalSheet(BuildContext context, int index) {
@@ -445,9 +385,17 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
         ),
         Row(
           children: <Widget>[
-            Text(
-              contact,
-              style: TextStyle(fontSize: 16.0, color: Colors.white54),
+            InkWell(
+              child: Text(
+                contact,
+                style: TextStyle(fontSize: 16.0, color: Colors.white54),
+              ),
+              onTap: () {
+                inten.Intent()
+                  ..setAction(act.Action.ACTION_VIEW)
+                  ..setData(Uri(scheme: "tel", path: contact))
+                  ..startActivity().catchError((e) => print(e));
+              },
             )
           ],
         ),
@@ -456,63 +404,110 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
   }
 
   Widget _buildCategoryCard(BuildContext context, int index) {
-    return Stack(
-      alignment: Alignment.centerRight,
-      children: <Widget>[
-        Card(
-          color: Colors.white.withOpacity(0.1),
-          margin: EdgeInsets.all(10.0),
-          child: InkWell(
-            onTap: () {
-              _showBottomModalSheet(context, index);
-            },
-            child: Container(
-              padding: EdgeInsets.fromLTRB(60.0, 10, 10, 10),
-              width: MediaQuery.of(context).size.width * 0.85,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Container(
-                    padding: EdgeInsets.all(4.0),
-                    child: Text(
-                      allCategories[index].name,
-                      style: TextStyle(
-                          fontSize: 20.0, fontWeight: FontWeight.w400),
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.all(4.0),
-                    child: Container(
-                        decoration: BoxDecoration(
-                            color: Colors.greenAccent,
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(40.0))),
-                        height: 0.7,
-                        width: 200.0),
-                  ),
-                  Container(
-                    padding: EdgeInsets.fromLTRB(4.0, 4.0, 5.0, 4.0),
-                    child: Text(
-                      allCategories[index].description,
-                      style: TextStyle(color: Colors.white54),
-                    ),
-                  )
-                ],
+    return Container(
+      child: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          Container(
+            child: Positioned(
+              left: MediaQuery.of(context).size.width * 0.6,
+              bottom: MediaQuery.of(context).size.height * 0.0,
+              child: Icon(
+                Icons.category,
+                color: Colors.white10,
+                size: 130.0,
               ),
             ),
           ),
-        ),
-        Positioned(
-          left: MediaQuery.of(context).size.width * 0.017,
-          top: 25.0,
-          child: CircleAvatar(
-            radius: 45.0,
-            child: Image.asset("assets/QI.png"),
+
+          Card(
+            color: Colors.white.withOpacity(0.1),
+            margin: EdgeInsets.fromLTRB(14.0,10,14,10),
+            child: InkWell(
+              onTap: () {
+                _showBottomModalSheet(context, index);
+              },
+              child: Container(
+                padding: EdgeInsets.fromLTRB(10.0, 10, 10, 10),
+                width: MediaQuery.of(context).size.width * 0.95,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Container(
+                      padding: EdgeInsets.all(4.0),
+                      child: Text(
+                        allCategories[index].name,
+                        style: TextStyle(
+                            fontSize: 20.0, fontWeight: FontWeight.w400),
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.all(4.0),
+                      child: Container(
+                          decoration: BoxDecoration(
+                              color: Colors.greenAccent,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(40.0))),
+                          height: 0.7,
+                          width: 200.0),
+                    ),
+                    Container(
+                      padding: EdgeInsets.fromLTRB(4.0, 4.0, 5.0, 4.0),
+                      child: Text(
+                        allCategories[index].description,
+                        style: TextStyle(color: Colors.white54),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
           ),
-        )
-      ],
+          // Positioned(
+          //   left: MediaQuery.of(context).size.width * 0.017,
+          //   top: 25.0,
+          //   child: buildCatLogo(allCategories[index].name),
+          // )
+        ],
+      ),
     );
+  }
+
+  List<String> logo = [
+    "Airborne",
+    "Alacrity",
+    "Bizzmaestro",
+    "Cheminova",
+    "Chrysallis",
+    "Constructure",
+    "Cosmic Con",
+    "Cryptoss",
+    "Electrific",
+    "Energia",
+    "Epsilon",
+    "Kraftwagen",
+    "Mechanixe",
+    "Mechanize",
+    "QI",
+    "Robotrek",
+    "Turing"
+  ];
+
+  buildCatLogo(String catName) {
+    int isPres = 0;
+
+    for (var name in logo) {
+      if (catName == name) {
+        isPres = 1;
+      }
+    }
+
+    return CircleAvatar(
+        radius: 45.0,
+        child: isPres == 1
+            ? Image.asset("assets/$catName.png")
+            : Image.asset("assets/logo_white.jpg"));
   }
 
   getCanRegister(int id) {
@@ -545,7 +540,6 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
         dir: tempPath, ignoreExpires: true, persistSession: true);
 
     dio.interceptors.add(CookieManager(cookieJar));
-    print("efefefef");
     var response = await dio.post("/createteam", data: {"eventid": eventId});
 
     print(response.statusCode);
@@ -831,7 +825,6 @@ class _CategoriesState extends State<Categories> with TickerProviderStateMixin {
   getTeamSize(ScheduleData scheduleData) {
     for (var i in allEvents) {
       if (i.id == scheduleData.eventId) {
-        print("MATCHED");
         return (i.maxTeamSize == i.minTeamSize)
             ? i.maxTeamSize.toString()
             : '${i.minTeamSize} - ${i.maxTeamSize}';
