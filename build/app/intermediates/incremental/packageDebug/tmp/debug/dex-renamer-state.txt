@@ -1,0 +1,4 @@
+#Tue Feb 04 23:38:40 IST 2020
+base.0=C\:\\Users\\Chakshu Saraswat\\Documents\\GitHub\\TechTatva19\\build\\app\\intermediates\\transforms\\dexMerger\\debug\\0
+path.0=classes.dex
+renamed.0=classes.dex

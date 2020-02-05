@@ -1,6 +1,7 @@
-barcode_scan=/home/akshit/flutter/.pub-cache/hosted/pub.dartlang.org/barcode_scan-1.0.0/
-intent=/home/akshit/flutter/.pub-cache/hosted/pub.dartlang.org/intent-1.1.0/
-path_provider=/home/akshit/flutter/.pub-cache/hosted/pub.dartlang.org/path_provider-1.3.0/
-shared_preferences=/home/akshit/flutter/.pub-cache/hosted/pub.dartlang.org/shared_preferences-0.5.3+4/
-sqflite=/home/akshit/flutter/.pub-cache/hosted/pub.dartlang.org/sqflite-1.1.6+5/
-url_launcher=/home/akshit/flutter/.pub-cache/hosted/pub.dartlang.org/url_launcher-5.1.4/
+# This is a generated file; do not edit or check into version control.
+barcode_scan=C:\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\barcode_scan-1.0.0\\
+intent=C:\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\intent-1.1.0\\
+path_provider=C:\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\path_provider-1.3.0\\
+shared_preferences=C:\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\shared_preferences-0.5.3+4\\
+sqflite=C:\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\sqflite-1.1.6+5\\
+url_launcher=C:\\flutter\\.pub-cache\\hosted\\pub.dartlang.org\\url_launcher-5.1.4\\

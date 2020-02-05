@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:techtatva19/organizers/drawer.dart';
 import 'package:techtatva19/pages/Home.dart';
 import 'package:techtatva19/pages/Schedule.dart';
 import 'package:techtatva19/pages/Categories.dart';
@@ -19,6 +20,7 @@ import 'package:techtatva19/models/EventModel.dart';
 import 'package:techtatva19/models/DelegateCardModel.dart';
 import 'package:techtatva19/models/UserModel.dart';
 import 'package:techtatva19/models/ResultModel.dart';
+
 
 void main() {
   runApp(MyApp());
@@ -231,6 +233,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return SafeArea(
       key: _scaffoldKey,
       child: Scaffold(
+        drawer: RevelsDrawer(context),
         appBar: (_page == 1 || _page == 2 || _page == 3 || _page == 4)
             ? null
             : AppBar(
